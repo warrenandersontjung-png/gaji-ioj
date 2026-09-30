@@ -113,7 +113,7 @@ if (recordMonthInput) {
   if (tablePeriodFilter) tablePeriodFilter.value = currentYYYYMM;
 }
 
-const workersByCategory = {
+const defaultWorkersByCategory = {
   "Admin GPS": ["Mei Dhea Cahya Ardika", "Ni Wayan Widiantari", "Tri Maharani"],
   "Finance": ["Christy Martika", "Wahyuningsih"],
   "Admin HPZ": ["Ni Luh Ayu Atmi Kamaratih", "Widya Nurliza", "Ni Luh Febriyanti", "Aldina Verbiana", "Afrilia Indriyani", "Ni Kadek Dina Suryani Dewi"],
@@ -126,6 +126,25 @@ const workersByCategory = {
   "Mekanik CCTV": ["Jackson M Bessie", "Stefanus"],
   "Helper": ["Yoyok Ujianto"]
 };
+
+let workersByCategory = JSON.parse(localStorage.getItem('payrollRoster')) || defaultWorkersByCategory;
+
+function listenToRoster() {
+  onSnapshot(collection(db, "worker_roster"), (snapshot) => {
+    if (!snapshot.empty) {
+      const dbRoster = JSON.parse(JSON.stringify(defaultWorkersByCategory));
+      snapshot.forEach(docSnap => {
+        const d = docSnap.data();
+        if (d.category && d.workers) dbRoster[d.category] = d.workers;
+      });
+      workersByCategory = dbRoster;
+      localStorage.setItem('payrollRoster', JSON.stringify(workersByCategory));
+    }
+    updateWorkerOptions();
+    updateSettingsWorkerDropdown();
+    renderRosterList();
+  });
+}
 
 function renderDynamicInputs() {
   const category = workerTypeSelect.value;
@@ -440,7 +459,6 @@ payrollForm.addEventListener('submit', async (e) => {
     await addDoc(collection(db, "payroll_records"), workerData);
     alert("Record synchronized successfully.");
 
-    // Directly return to Category Selection in index.html without forcing re-login
     window.location.href = 'index.html';
   } catch (error) {
     console.error("Error saving record: ", error);
@@ -692,5 +710,112 @@ if (clearPeriodFilterBtn) {
   });
 }
 
+// WORKER ROSTER MODAL LOGIC FOR MR. THUSEN
+const openWorkerRosterModalBtn = document.getElementById('openWorkerRosterModalBtn');
+const workerRosterModal = document.getElementById('workerRosterModal');
+const closeWorkerRosterModalBtn = document.getElementById('closeWorkerRosterModalBtn');
+const addWorkerForm = document.getElementById('addWorkerForm');
+const rosterCategoryFilter = document.getElementById('rosterCategoryFilter');
+const rosterListContainer = document.getElementById('rosterListContainer');
+
+if (openWorkerRosterModalBtn) {
+  openWorkerRosterModalBtn.addEventListener('click', () => {
+    workerRosterModal.classList.remove('hidden');
+    workerRosterModal.classList.add('flex');
+    renderRosterList();
+  });
+}
+
+function closeRosterModal() {
+  workerRosterModal.classList.add('hidden');
+  workerRosterModal.classList.remove('flex');
+}
+
+if (closeWorkerRosterModalBtn) closeWorkerRosterModalBtn.addEventListener('click', closeRosterModal);
+
+function renderRosterList() {
+  if (!rosterListContainer) return;
+  rosterListContainer.innerHTML = '';
+  const filterCat = rosterCategoryFilter ? rosterCategoryFilter.value : 'ALL';
+
+  let hasWorkers = false;
+
+  Object.keys(workersByCategory).forEach(cat => {
+    if (filterCat !== 'ALL' && filterCat !== cat) return;
+
+    workersByCategory[cat].forEach(name => {
+      hasWorkers = true;
+      const item = document.createElement('div');
+      item.className = 'py-2 px-2 flex items-center justify-between hover:bg-slate-900/80 transition-colors rounded-lg';
+      item.innerHTML = `
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-semibold text-white">${name}</span>
+          <span class="text-[9px] px-2 py-0.5 bg-slate-800 text-slate-400 rounded-md font-mono">${cat}</span>
+        </div>
+        <button type="button" class="remove-worker-btn p-1 text-rose-400 hover:text-rose-300 hover:bg-rose-950/50 rounded-lg transition-all" title="Remove Employee">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      `;
+
+      item.querySelector('.remove-worker-btn').addEventListener('click', () => {
+        removeWorkerFromRoster(cat, name);
+      });
+
+      rosterListContainer.appendChild(item);
+    });
+  });
+
+  if (!hasWorkers) {
+    rosterListContainer.innerHTML = `<div class="p-4 text-center text-xs text-slate-500 italic">No workers found in selected category.</div>`;
+  }
+}
+
+if (rosterCategoryFilter) rosterCategoryFilter.addEventListener('change', renderRosterList);
+
+async function saveCategoryRosterToFirestore(cat) {
+  try {
+    await setDoc(doc(db, "worker_roster", cat), {
+      category: cat,
+      workers: workersByCategory[cat] || []
+    });
+    localStorage.setItem('payrollRoster', JSON.stringify(workersByCategory));
+    updateWorkerOptions();
+    updateSettingsWorkerDropdown();
+    renderRosterList();
+  } catch (e) {
+    console.error("Error saving worker roster: ", e);
+    alert("Could not update worker roster in database.");
+  }
+}
+
+if (addWorkerForm) {
+  addWorkerForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const cat = document.getElementById('newWorkerCategory').value;
+    const name = document.getElementById('newWorkerName').value.trim();
+
+    if (!cat || !name) return;
+
+    if (!workersByCategory[cat]) workersByCategory[cat] = [];
+    if (workersByCategory[cat].includes(name)) {
+      alert(`"${name}" is already in the ${cat} category.`);
+      return;
+    }
+
+    workersByCategory[cat].push(name);
+    await saveCategoryRosterToFirestore(cat);
+    document.getElementById('newWorkerName').value = '';
+    alert(`Added ${name} to ${cat}.`);
+  });
+}
+
+async function removeWorkerFromRoster(cat, name) {
+  if (confirm(`Are you sure you want to remove "${name}" from the ${cat} roster?`)) {
+    workersByCategory[cat] = (workersByCategory[cat] || []).filter(w => w !== name);
+    await saveCategoryRosterToFirestore(cat);
+  }
+}
+
+listenToRoster();
 listenToDefaultWages();
 listenToPayrollData();
