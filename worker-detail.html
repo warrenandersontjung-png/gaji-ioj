@@ -580,13 +580,11 @@
         }
 
         try {
-          // Update Firestore Submission Record
           await updateDoc(doc(db, "payroll_records", data.id), {
             hasKerajinanBonus: newKerajinanEligible,
             metrics: newMetrics
           });
 
-          // Update Firestore Default Wage Configuration for Worker
           const sisaKasbonCalc = Math.max(0, (data.kasbonLama || 0) - newPotongan);
           await setDoc(doc(db, "default_wages", data.workerName), {
             workerName: data.workerName,
@@ -597,10 +595,8 @@
             potonganKasbon: newPotongan
           }, { merge: true });
 
-          // Recalculate Net Wage
           const recalculatedTHP = calculateTHP(data, newGajiPokok, newUangMakan, newInsentif, newPotongan, newKerajinanEligible, newMetrics);
 
-          // Update local memory & cache
           data = {
             ...data,
             defaultGajiPokok: newGajiPokok,
