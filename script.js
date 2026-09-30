@@ -1,7 +1,7 @@
 // 1. Import Firebase SDKs
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
-  getFirestore, 
+  getFirestore,  
   collection, 
   addDoc, 
   doc,
