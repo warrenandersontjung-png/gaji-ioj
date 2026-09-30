@@ -1,3 +1,4 @@
+// script.js
 // 1. Import Firebase SDKs
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
@@ -47,6 +48,7 @@ const gajiPokokSettingsSection = document.getElementById('gajiPokokSettingsSecti
 const settingCategorySelect = document.getElementById('settingCategorySelect');
 const settingWorkerSelect = document.getElementById('settingWorkerSelect');
 const gajiPokokForm = document.getElementById('gajiPokokForm');
+const exitSessionBtn = document.getElementById('exitSessionBtn');
 
 // Filters
 const tableCategoryFilter = document.getElementById('tableCategoryFilter');
@@ -217,7 +219,7 @@ if (settingPotonganKasbon) settingPotonganKasbon.addEventListener('input', updat
 
 const urlParams = new URLSearchParams(window.location.search);
 const preselectedType = urlParams.get('type');
-const preselectedUser = urlParams.get('user');
+const preselectedUser = urlParams.get('user') || sessionStorage.getItem('activePayrollUser');
 
 if (preselectedType && workerTypeSelect) {
   workerTypeSelect.value = preselectedType;
@@ -230,10 +232,10 @@ if (preselectedUser) {
   activeUserBadge.textContent = 'Guest User';
 }
 
-const exitSessionBtn = document.getElementById('exitSessionBtn');
 if (exitSessionBtn) {
   exitSessionBtn.addEventListener('click', () => {
     sessionStorage.removeItem('activePayrollUser');
+    window.location.href = 'index.html';
   });
 }
 
@@ -437,13 +439,9 @@ payrollForm.addEventListener('submit', async (e) => {
 
     await addDoc(collection(db, "payroll_records"), workerData);
     alert("Record synchronized successfully.");
-    payrollForm.reset();
-    
-    const now = new Date();
-    recordMonthInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    
-    updateWorkerOptions();
-    renderDynamicInputs();
+
+    // Directly return to Category Selection in index.html without forcing re-login
+    window.location.href = 'index.html';
   } catch (error) {
     console.error("Error saving record: ", error);
     alert("An error occurred while saving. Please try again.");
