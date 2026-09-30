@@ -1,4 +1,5 @@
- <!DOCTYPE html>
+<!-- worker-detail.html -->
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -64,12 +65,18 @@
     
     <!-- TOP NAVIGATION & ACTION BAR -->
     <div class="flex items-center justify-between no-print">
-      <a href="payroll.html?user=Thusen" class="inline-flex items-center gap-2 text-xs text-indigo-400 hover:text-indigo-300 transition-all font-semibold uppercase tracking-wider group">
+      <a id="returnBtn" href="payroll.html?user=Thusen" class="inline-flex items-center gap-2 text-xs text-indigo-400 hover:text-indigo-300 transition-all font-semibold uppercase tracking-wider group">
         <svg class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
         Return to Dashboard
       </a>
 
       <div class="flex items-center gap-3">
+        <!-- EDIT BUTTON (ONLY VISIBLE TO MR. THUSEN) -->
+        <button type="button" id="editRecordBtn" class="hidden inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-amber-600/20 active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 012.828 0L19.5 5.5a2 2 0 010 2.828l-8.5 8.5H8v-2.5l8.586-8.586z"/></svg>
+          Edit Record
+        </button>
+
         <button type="button" id="downloadPdfBtn" class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-emerald-600/20 active:scale-95">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
           <span id="downloadBtnText">Download Payslip PDF</span>
@@ -177,7 +184,77 @@
     </div>
   </div>
 
-  <script>
+  <!-- OWNER EDIT MODAL (MR. THUSEN) -->
+  <div id="editModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50 no-print">
+    <div class="max-w-lg w-full glass-card p-6 rounded-2xl border border-amber-500/40 shadow-2xl space-y-5 bg-slate-900/95 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h3 class="text-base font-bold text-amber-400">Edit Payslip Record</h3>
+          <p class="text-xs text-slate-400">Modify baseline wages or monthly performance metrics.</p>
+        </div>
+        <button type="button" id="closeEditModalBtn" class="text-slate-400 hover:text-white p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="editForm" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">Gaji Pokok (IDR)</label>
+            <input type="text" id="editGajiPokok" class="money-input w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">Uang Makan (IDR)</label>
+            <input type="text" id="editUangMakan" class="money-input w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">Insentif (IDR)</label>
+            <input type="text" id="editInsentif" class="money-input w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">Potongan Kasbon (IDR)</label>
+            <input type="text" id="editPotonganKasbon" class="money-input w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">Bonus Kerajinan</label>
+          <select id="editKerajinanBonus" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500">
+            <option value="true">Eligible (+300,000)</option>
+            <option value="false">Ineligible (0)</option>
+          </select>
+        </div>
+
+        <!-- DYNAMIC EDIT METRICS CONTAINER -->
+        <div id="editDynamicMetrics" class="space-y-4 pt-2 border-t border-slate-800"></div>
+
+        <div class="flex justify-end gap-3 pt-3">
+          <button type="button" id="cancelEditBtn" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold uppercase tracking-wider">Cancel</button>
+          <button type="submit" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-amber-600/30">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCID8HBa-82SOKDrJ5-7FfBpHanUyPgISs",
+      authDomain: "payroll-tracker-55409.firebaseapp.com",
+      projectId: "payroll-tracker-55409",
+      storageBucket: "payroll-tracker-55409.firebasestorage.app",
+      messagingSenderId: "336268687896",
+      appId: "1:336268687896:web:666719cdb5ce72db27616d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
     const themeToggleBtn = document.getElementById('themeToggleBtn');
     const themeIconSun = document.getElementById('themeIconSun');
     const themeIconMoon = document.getElementById('themeIconMoon');
@@ -205,32 +282,47 @@
       });
     }
 
-    const data = JSON.parse(localStorage.getItem('selectedWorker'));
+    let data = JSON.parse(localStorage.getItem('selectedWorker'));
+    const activeUser = sessionStorage.getItem('activePayrollUser');
+    const returnBtn = document.getElementById('returnBtn');
+    const editRecordBtn = document.getElementById('editRecordBtn');
+
+    if (returnBtn) {
+      if (activeUser === 'Thusen') {
+        returnBtn.href = 'payroll.html?user=Thusen';
+      } else if (data && data.workerType && activeUser) {
+        returnBtn.href = `payroll.html?type=${encodeURIComponent(data.workerType)}&user=${encodeURIComponent(activeUser)}`;
+      } else {
+        returnBtn.href = 'index.html';
+      }
+    }
+
+    if (activeUser === 'Thusen' && editRecordBtn) {
+      editRecordBtn.classList.remove('hidden');
+    }
+
     let formattedPdfFilename = "Payslip.pdf";
 
-    if (data) {
-      document.getElementById('workerNameDisplay').textContent = data.workerName;
-      document.getElementById('workerTypeDisplay').textContent = `Category: ${data.workerType}`;
-      document.getElementById('totalWageDisplay').textContent = `Rp ${(data.totalWage || 0).toLocaleString('en-US')}`;
+    function renderPayslipView(record) {
+      if (!record) return;
 
-      // Period Format
-      const formattedPeriodStr = data.recordMonth 
-        ? new Date(`${data.recordMonth}-01`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      document.getElementById('workerNameDisplay').textContent = record.workerName;
+      document.getElementById('workerTypeDisplay').textContent = `Category: ${record.workerType}`;
+      document.getElementById('totalWageDisplay').textContent = `Rp ${(record.totalWage || 0).toLocaleString('en-US')}`;
+
+      const formattedPeriodStr = record.recordMonth 
+        ? new Date(`${record.recordMonth}-01`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
         : 'N/A';
 
       document.getElementById('periodDisplay').textContent = formattedPeriodStr;
+      formattedPdfFilename = `${record.workerName}, ${formattedPeriodStr}.pdf`;
 
-      // SET DYNAMIC FILENAME FORMAT: [Worker Name], [Month Year].pdf
-      formattedPdfFilename = `${data.workerName}, ${formattedPeriodStr}.pdf`;
+      document.getElementById('gajiPokokDisplay').textContent = `Rp ${(record.defaultGajiPokok || 0).toLocaleString('en-US')}`;
+      document.getElementById('uangMakanDisplay').textContent = `Rp ${(record.uangMakan || 0).toLocaleString('en-US')}`;
+      document.getElementById('insentifDisplay').textContent = `Rp ${(record.insentif || 0).toLocaleString('en-US')}`;
 
-      // Base Rates
-      document.getElementById('gajiPokokDisplay').textContent = `Rp ${(data.defaultGajiPokok || 0).toLocaleString('en-US')}`;
-      document.getElementById('uangMakanDisplay').textContent = `Rp ${(data.uangMakan || 0).toLocaleString('en-US')}`;
-      document.getElementById('insentifDisplay').textContent = `Rp ${(data.insentif || 0).toLocaleString('en-US')}`;
-
-      // Bonus Kerajinan (Punctuality)
       const kerajinanBadge = document.getElementById('kerajinanBadge');
-      if (data.hasKerajinanBonus) {
+      if (record.hasKerajinanBonus) {
         kerajinanBadge.textContent = 'Eligible';
         kerajinanBadge.className = 'text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-wider bg-emerald-950/80 text-emerald-400 border border-emerald-800';
         document.getElementById('kerajinanDisplay').textContent = '+Rp 300,000';
@@ -240,8 +332,7 @@
         document.getElementById('kerajinanDisplay').textContent = 'Rp 0';
       }
 
-      // Variable Metrics & Performance Bonus Calculation
-      const m = data.metrics || {};
+      const m = record.metrics || {};
       const metricsText = document.getElementById('metricsText');
       const variableBonusRow = document.getElementById('variableBonusRow');
       const variableBonusLabel = document.getElementById('variableBonusLabel');
@@ -250,27 +341,27 @@
 
       let varBonusAmt = 0;
 
-      if (data.workerType === "Admin GPS") {
+      if (record.workerType === "Admin GPS") {
         varBonusAmt = (m.unitCount || 0) * 5000;
         metricsText.textContent = `GPS Units Sold: ${m.unitCount || 0} unit(s) @ Rp 5,000 / unit`;
         variableBonusLabel.textContent = "Bonus Penjualan GPS";
-      } else if (data.workerType === "Sales HPZ") {
+      } else if (record.workerType === "Sales HPZ") {
         varBonusAmt = (m.sales3Months || 0) * 0.01;
         metricsText.textContent = `Total 3-Month Sales: Rp ${(m.sales3Months || 0).toLocaleString('en-US')} (1% Commission)`;
         variableBonusLabel.textContent = "Komisi Penjualan (1%)";
-      } else if (data.workerType === "Mekanik HPZ") {
+      } else if (record.workerType === "Mekanik HPZ") {
         varBonusAmt = (m.instalasiHpzAmount || 0) * 0.01;
         metricsText.textContent = `Monthly Installation Sales: Rp ${(m.instalasiHpzAmount || 0).toLocaleString('en-US')} (1% Commission)`;
         variableBonusLabel.textContent = "Komisi Instalasi HPZ (1%)";
-      } else if (data.workerType === "Mekanik GPS") {
+      } else if (record.workerType === "Mekanik GPS") {
         varBonusAmt = ((m.pasangGpsUnits || 0) * 25000) + ((m.cekGpsUnits || 0) * 15000);
         metricsText.textContent = `Pasang GPS: ${m.pasangGpsUnits || 0} unit(s) | Cek GPS: ${m.cekGpsUnits || 0} unit(s)`;
         variableBonusLabel.textContent = "Bonus Unit GPS (Pasang & Cek)";
-      } else if (data.workerType === "Mekanik CCTV") {
+      } else if (record.workerType === "Mekanik CCTV") {
         varBonusAmt = ((m.pasangCctvUnits || 0) * 25000) + ((m.servisCctvUnits || 0) * 15000);
         metricsText.textContent = `Pasang CCTV: ${m.pasangCctvUnits || 0} unit(s) | Servis CCTV: ${m.servisCctvUnits || 0} unit(s)`;
         variableBonusLabel.textContent = "Bonus CCTV (Pasang & Servis)";
-      } else if (data.workerType === "Helper") {
+      } else if (record.workerType === "Helper") {
         varBonusAmt = ((m.pasangGpsUnits || 0) * 25000) + ((m.cekGpsUnits || 0) * 15000);
         metricsText.textContent = `Pasang GPS: ${m.pasangGpsUnits || 0} unit(s) | Cek GPS: ${m.cekGpsUnits || 0} unit(s)`;
         variableBonusLabel.textContent = "Bonus Unit GPS (Helper)";
@@ -282,21 +373,22 @@
 
       if (varBonusAmt > 0) {
         variableBonusDisplay.textContent = `+Rp ${varBonusAmt.toLocaleString('en-US')}`;
-      } else if (data.workerType !== "Admin GPS" && data.workerType !== "Sales HPZ" && data.workerType !== "Mekanik HPZ" && data.workerType !== "Mekanik GPS" && data.workerType !== "Mekanik CCTV" && data.workerType !== "Helper") {
+      } else if (record.workerType !== "Admin GPS" && record.workerType !== "Sales HPZ" && record.workerType !== "Mekanik HPZ" && record.workerType !== "Mekanik GPS" && record.workerType !== "Mekanik CCTV" && record.workerType !== "Helper") {
         variableBonusRow.classList.add('hidden');
       } else {
         variableBonusDisplay.textContent = `Rp 0`;
       }
 
-      // Kasbon Deductions
-      document.getElementById('potonganKasbonDisplay').textContent = `-Rp ${(data.potonganKasbon || 0).toLocaleString('en-US')}`;
-      document.getElementById('sisaKasbonSubtext').textContent = `Sisa Kasbon Setelah Potongan: Rp ${(data.sisaKasbon || 0).toLocaleString('en-US')}`;
+      document.getElementById('potonganKasbonDisplay').textContent = `-Rp ${(record.potonganKasbon || 0).toLocaleString('en-US')}`;
+      document.getElementById('sisaKasbonSubtext').textContent = `Sisa Kasbon Setelah Potongan: Rp ${(record.sisaKasbon || 0).toLocaleString('en-US')}`;
+      document.getElementById('dateDisplay').textContent = record.formattedDateTime || 'N/A';
+    }
 
-      // Timestamp
-      document.getElementById('dateDisplay').textContent = data.formattedDateTime || 'N/A';
+    if (data) {
+      renderPayslipView(data);
     } else {
       document.querySelector('.max-w-2xl').innerHTML = `
-        <p class="text-center text-slate-400 text-xs">No worker data found. <a href="payroll.html?user=Thusen" class="text-indigo-400 underline">Return to Dashboard</a></p>
+        <p class="text-center text-slate-400 text-xs">No worker data found. <a href="index.html" class="text-indigo-400 underline">Return to Selection</a></p>
       `;
     }
 
@@ -307,10 +399,7 @@
     if (downloadPdfBtn) {
       downloadPdfBtn.addEventListener('click', () => {
         downloadBtnText.textContent = 'Generating PDF...';
-        
         const payslipElement = document.getElementById('payslipContent');
-
-        // Apply high-contrast light document styling during capture
         payslipElement.classList.add('pdf-mode');
 
         const pdfOptions = {
@@ -331,6 +420,208 @@
           alert("Could not generate PDF directly. Falling back to browser print.");
           window.print();
         });
+      });
+    }
+
+    // OWNER EDIT MODAL LOGIC (MR. THUSEN)
+    const editModal = document.getElementById('editModal');
+    const closeEditModalBtn = document.getElementById('closeEditModalBtn');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const editForm = document.getElementById('editForm');
+    const editDynamicMetrics = document.getElementById('editDynamicMetrics');
+
+    function formatCurrencyString(val) {
+      const digits = String(val).replace(/\D/g, "");
+      return digits ? Number(digits).toLocaleString('en-US') : "";
+    }
+
+    function parseCurrencyNumber(formattedStr) {
+      return Number(String(formattedStr).replace(/\D/g, "")) || 0;
+    }
+
+    function calculateTHP(rec, gajiPokok, meal, insentif, potongan, bonusKerajinanEligible, metrics) {
+      const bonusKerajinan = bonusKerajinanEligible ? 300000 : 0;
+      let varBonus = 0;
+
+      switch (rec.workerType) {
+        case "Admin GPS":
+          varBonus = (metrics.unitCount || 0) * 5000;
+          return gajiPokok + meal + bonusKerajinan + insentif + varBonus - potongan;
+        case "Sales HPZ":
+          varBonus = (metrics.sales3Months || 0) * 0.01;
+          return meal + varBonus - potongan;
+        case "Mekanik HPZ":
+          varBonus = (metrics.instalasiHpzAmount || 0) * 0.01;
+          return gajiPokok + meal + bonusKerajinan + insentif + varBonus - potongan;
+        case "Mekanik GPS":
+          varBonus = ((metrics.pasangGpsUnits || 0) * 25000) + ((metrics.cekGpsUnits || 0) * 15000);
+          return gajiPokok + meal + bonusKerajinan + insentif + varBonus - potongan;
+        case "Mekanik CCTV":
+          varBonus = ((metrics.pasangCctvUnits || 0) * 25000) + ((metrics.servisCctvUnits || 0) * 15000);
+          return gajiPokok + meal + bonusKerajinan + insentif + varBonus - potongan;
+        case "Helper":
+          varBonus = ((metrics.pasangGpsUnits || 0) * 25000) + ((metrics.cekGpsUnits || 0) * 15000) + (metrics.cleaningServiceAllowance || 1000000);
+          return gajiPokok + meal + bonusKerajinan + insentif + varBonus - potongan;
+        default:
+          return gajiPokok + meal + bonusKerajinan + insentif - potongan;
+      }
+    }
+
+    if (editRecordBtn) {
+      editRecordBtn.addEventListener('click', () => {
+        if (!data) return;
+
+        document.getElementById('editGajiPokok').value = formatCurrencyString(data.defaultGajiPokok || 0);
+        document.getElementById('editUangMakan').value = formatCurrencyString(data.uangMakan || 0);
+        document.getElementById('editInsentif').value = formatCurrencyString(data.insentif || 0);
+        document.getElementById('editPotonganKasbon').value = formatCurrencyString(data.potonganKasbon || 0);
+        document.getElementById('editKerajinanBonus').value = data.hasKerajinanBonus ? "true" : "false";
+
+        // Bind currency input formatters
+        document.querySelectorAll('#editModal .money-input').forEach(input => {
+          input.oninput = (e) => e.target.value = formatCurrencyString(e.target.value);
+        });
+
+        // Dynamic metrics builder
+        const m = data.metrics || {};
+        let html = '';
+
+        if (data.workerType === "Admin GPS") {
+          html = `
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-1">GPS Units Sold</label>
+              <input type="number" id="editUnitCount" value="${m.unitCount || 0}" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
+            </div>`;
+        } else if (data.workerType === "Sales HPZ") {
+          html = `
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-1">3-Month Sales Amount (IDR)</label>
+              <input type="text" id="editSales3Months" value="${formatCurrencyString(m.sales3Months || 0)}" class="money-input w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
+            </div>`;
+        } else if (data.workerType === "Mekanik HPZ") {
+          html = `
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-1">Monthly Installation Sales (IDR)</label>
+              <input type="text" id="editInstalasiHpzAmount" value="${formatCurrencyString(m.instalasiHpzAmount || 0)}" class="money-input w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
+            </div>`;
+        } else if (data.workerType === "Mekanik GPS" || data.workerType === "Helper") {
+          html = `
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-1">Pasang GPS Units</label>
+                <input type="number" id="editPasangGpsUnits" value="${m.pasangGpsUnits || 0}" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-1">Cek GPS Units</label>
+                <input type="number" id="editCekGpsUnits" value="${m.cekGpsUnits || 0}" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
+              </div>
+            </div>`;
+        } else if (data.workerType === "Mekanik CCTV") {
+          html = `
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-1">Pasang CCTV Units</label>
+                <input type="number" id="editPasangCctvUnits" value="${m.pasangCctvUnits || 0}" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-1">Servis CCTV Units</label>
+                <input type="number" id="editServisCctvUnits" value="${m.servisCctvUnits || 0}" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
+              </div>
+            </div>`;
+        }
+
+        editDynamicMetrics.innerHTML = html;
+        document.querySelectorAll('#editModal .money-input').forEach(input => {
+          input.oninput = (e) => e.target.value = formatCurrencyString(e.target.value);
+        });
+
+        editModal.classList.remove('hidden');
+        editModal.classList.add('flex');
+      });
+    }
+
+    function closeModal() {
+      editModal.classList.add('hidden');
+      editModal.classList.remove('flex');
+    }
+
+    if (closeEditModalBtn) closeEditModalBtn.addEventListener('click', closeModal);
+    if (cancelEditBtn) cancelEditBtn.addEventListener('click', closeModal);
+
+    if (editForm) {
+      editForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!data || !data.id) {
+          alert("Error: Missing record identifier.");
+          return;
+        }
+
+        const newGajiPokok = parseCurrencyNumber(document.getElementById('editGajiPokok').value);
+        const newUangMakan = parseCurrencyNumber(document.getElementById('editUangMakan').value);
+        const newInsentif = parseCurrencyNumber(document.getElementById('editInsentif').value);
+        const newPotongan = parseCurrencyNumber(document.getElementById('editPotonganKasbon').value);
+        const newKerajinanEligible = document.getElementById('editKerajinanBonus').value === "true";
+
+        let newMetrics = { ...data.metrics };
+
+        if (data.workerType === "Admin GPS") {
+          newMetrics.unitCount = Number(document.getElementById('editUnitCount')?.value || 0);
+        } else if (data.workerType === "Sales HPZ") {
+          newMetrics.sales3Months = parseCurrencyNumber(document.getElementById('editSales3Months')?.value || 0);
+        } else if (data.workerType === "Mekanik HPZ") {
+          newMetrics.instalasiHpzAmount = parseCurrencyNumber(document.getElementById('editInstalasiHpzAmount')?.value || 0);
+        } else if (data.workerType === "Mekanik GPS" || data.workerType === "Helper") {
+          newMetrics.pasangGpsUnits = Number(document.getElementById('editPasangGpsUnits')?.value || 0);
+          newMetrics.cekGpsUnits = Number(document.getElementById('editCekGpsUnits')?.value || 0);
+          if (data.workerType === "Helper") newMetrics.cleaningServiceAllowance = 1000000;
+        } else if (data.workerType === "Mekanik CCTV") {
+          newMetrics.pasangCctvUnits = Number(document.getElementById('editPasangCctvUnits')?.value || 0);
+          newMetrics.servisCctvUnits = Number(document.getElementById('editServisCctvUnits')?.value || 0);
+        }
+
+        try {
+          // Update Firestore Submission Record
+          await updateDoc(doc(db, "payroll_records", data.id), {
+            hasKerajinanBonus: newKerajinanEligible,
+            metrics: newMetrics
+          });
+
+          // Update Firestore Default Wage Configuration for Worker
+          const sisaKasbonCalc = Math.max(0, (data.kasbonLama || 0) - newPotongan);
+          await setDoc(doc(db, "default_wages", data.workerName), {
+            workerName: data.workerName,
+            defaultGajiPokok: newGajiPokok,
+            uangMakan: newUangMakan,
+            insentif: newInsentif,
+            kasbonLama: data.kasbonLama || 0,
+            potonganKasbon: newPotongan
+          }, { merge: true });
+
+          // Recalculate Net Wage
+          const recalculatedTHP = calculateTHP(data, newGajiPokok, newUangMakan, newInsentif, newPotongan, newKerajinanEligible, newMetrics);
+
+          // Update local memory & cache
+          data = {
+            ...data,
+            defaultGajiPokok: newGajiPokok,
+            uangMakan: newUangMakan,
+            insentif: newInsentif,
+            potonganKasbon: newPotongan,
+            sisaKasbon: sisaKasbonCalc,
+            hasKerajinanBonus: newKerajinanEligible,
+            metrics: newMetrics,
+            totalWage: recalculatedTHP
+          };
+
+          localStorage.setItem('selectedWorker', JSON.stringify(data));
+          renderPayslipView(data);
+
+          alert(`Payslip record for ${data.workerName} updated successfully.`);
+          closeModal();
+        } catch (err) {
+          console.error("Error saving updates: ", err);
+          alert("Could not update record in database. Please check console.");
+        }
       });
     }
   </script>
