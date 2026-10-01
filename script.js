@@ -113,9 +113,11 @@ if (recordMonthInput) {
   if (tablePeriodFilter) tablePeriodFilter.value = currentYYYYMM;
 }
 
+// SPLIT FINANCE CATEGORIES AND REASSIGNED WORKER LISTS
 const defaultWorkersByCategory = {
   "Admin GPS": ["Mei Dhea Cahya Ardika", "Ni Wayan Widiantari", "Tri Maharani"],
-  "Finance": ["Christy Martika", "Wahyuningsih"],
+  "Finance GPS": ["Wahyuningsih"],
+  "Finance HPZ": ["Christy Martika"],
   "Admin HPZ": ["Ni Luh Ayu Atmi Kamaratih", "Widya Nurliza", "Ni Luh Febriyanti", "Aldina Verbiana", "Afrilia Indriyani", "Ni Kadek Dina Suryani Dewi"],
   "Team comm": ["Tio Atrik Herdiansyah"],
   "Sales HPZ": ["Richard Antonius", "Iwan Pratama"],
@@ -506,7 +508,8 @@ function calculateTotalWage(record, settings) {
       variableBonus = (m.unitCount || 0) * 5000;
       return baseSalary + mealAllowance + bonusKerajinan + incentive + variableBonus - potonganKasbon;
 
-    case "Finance":
+    case "Finance GPS":
+    case "Finance HPZ":
     case "Admin HPZ":
     case "Team comm":
     case "Gudang":
