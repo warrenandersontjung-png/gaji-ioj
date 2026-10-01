@@ -82,13 +82,20 @@
           </div>
         </div>
 
-        <div id="punctualityBlock" class="grid grid-cols-1 gap-6 bg-slate-950/60 p-5 rounded-xl border border-slate-800/80">
+        <div id="punctualityBlock" class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950/60 p-5 rounded-xl border border-slate-800/80">
           <div>
             <label class="block text-[11px] font-semibold text-slate-300 mb-2 uppercase tracking-wider">Bonus Kerajinan / Punctuality Bonus</label>
             <select id="hasKerajinanBonus" required class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-indigo-500 transition-all">
               <option value="true">Eligible</option>
               <option value="false">Ineligible</option>
             </select>
+          </div>
+
+          <!-- KASBON KANTOR ONE-TIME DEDUCTION INPUT FOR ADMINS -->
+          <div>
+            <label class="block text-[11px] font-semibold text-rose-300 mb-2 uppercase tracking-wider">Kasbon Kantor (Current Month Only IDR)</label>
+            <input type="text" id="kasbonKantorInput" value="0" placeholder="0" class="money-input w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-rose-500 font-mono transition-all">
+            <span class="text-[10px] text-slate-400 mt-1 block">One-time deduction for this month only; resets to zero next month.</span>
           </div>
         </div>
 
@@ -169,7 +176,7 @@
           </div>
 
           <!-- KASBON MANAGEMENT FIELDS FOR MR. THUSEN -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-amber-950/20 p-5 rounded-xl border border-amber-900/40">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6 bg-amber-950/20 p-5 rounded-xl border border-amber-900/40">
             <div>
               <label class="block text-[11px] font-semibold text-amber-300 mb-2 uppercase tracking-wider">Total Existing Loan (Kasbon Lama)</label>
               <input type="text" id="settingKasbonLama" value="0" required placeholder="0" class="money-input w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-amber-500 font-mono transition-all">
@@ -178,6 +185,11 @@
             <div>
               <label class="block text-[11px] font-semibold text-amber-300 mb-2 uppercase tracking-wider">Monthly Wage Deduction (Potongan Kasbon)</label>
               <input type="text" id="settingPotonganKasbon" value="0" required placeholder="0" class="money-input w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-amber-500 font-mono transition-all">
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-semibold text-rose-300 mb-2 uppercase tracking-wider">Kasbon Kantor (One-time Deduction)</label>
+              <input type="text" id="settingKasbonKantor" value="0" placeholder="0" class="money-input w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-rose-500 font-mono transition-all">
             </div>
 
             <div>
@@ -292,6 +304,7 @@
                 <th class="p-4">Meal Allowance</th>
                 <th class="p-4">Bonus Kerajinan</th>
                 <th class="p-4">Potongan Kasbon</th>
+                <th class="p-4">Kasbon Kantor</th>
                 <th class="p-4">Sisa Kasbon</th>
                 <th class="p-4 text-emerald-400 font-bold">TOTAL WAGE</th>
                 <th class="p-4">Submitted By</th>
