@@ -57,10 +57,12 @@ const tablePeriodFilter = document.getElementById('tablePeriodFilter');
 const clearPeriodFilterBtn = document.getElementById('clearPeriodFilterBtn');
 const punctualityBlock = document.getElementById('punctualityBlock');
 
-// Kasbon Settings Elements (Mr. Thusen)
+// Kasbon Settings Elements (Mr. Thusen & Admin Input)
 const settingKasbonLama = document.getElementById('settingKasbonLama');
 const settingPotonganKasbon = document.getElementById('settingPotonganKasbon');
+const settingKasbonKantor = document.getElementById('settingKasbonKantor');
 const settingSisaKasbonDisplay = document.getElementById('settingSisaKasbonDisplay');
+const kasbonKantorInput = document.getElementById('kasbonKantorInput');
 
 // Theme Elements
 const themeToggleBtn = document.getElementById('themeToggleBtn');
@@ -113,7 +115,6 @@ if (recordMonthInput) {
   if (tablePeriodFilter) tablePeriodFilter.value = currentYYYYMM;
 }
 
-// SPLIT FINANCE CATEGORIES AND REASSIGNED WORKER LISTS
 const defaultWorkersByCategory = {
   "Admin GPS": ["Mei Dhea Cahya Ardika", "Ni Wayan Widiantari", "Tri Maharani"],
   "Finance GPS": ["Wahyuningsih"],
@@ -326,12 +327,14 @@ settingWorkerSelect.addEventListener('change', () => {
     document.getElementById('settingUangMakanAmount').value = formatCurrencyString(existing.uangMakan || 0);
     settingKasbonLama.value = formatCurrencyString(existing.kasbonLama || 0);
     settingPotonganKasbon.value = formatCurrencyString(existing.potonganKasbon || 0);
+    if (settingKasbonKantor) settingKasbonKantor.value = formatCurrencyString(existing.kasbonKantor || 0);
   } else {
     document.getElementById('settingGajiPokokAmount').value = "0";
     document.getElementById('settingInsentifAmount').value = "0";
     document.getElementById('settingUangMakanAmount').value = "0";
     settingKasbonLama.value = "0";
     settingPotonganKasbon.value = "0";
+    if (settingKasbonKantor) settingKasbonKantor.value = "0";
   }
   updateSisaKasbonLive();
 });
@@ -364,6 +367,7 @@ gajiPokokForm.addEventListener('submit', async (e) => {
   const uangMakan = parseCurrencyNumber(document.getElementById('settingUangMakanAmount').value);
   const kasbonLama = parseCurrencyNumber(settingKasbonLama.value);
   const potonganKasbon = parseCurrencyNumber(settingPotonganKasbon.value);
+  const kasbonKantor = parseCurrencyNumber(settingKasbonKantor?.value || 0);
 
   try {
     await setDoc(doc(db, "default_wages", workerName), {
@@ -373,6 +377,7 @@ gajiPokokForm.addEventListener('submit', async (e) => {
       uangMakan: uangMakan,
       kasbonLama: kasbonLama,
       potonganKasbon: potonganKasbon,
+      kasbonKantor: kasbonKantor,
       updatedAt: serverTimestamp()
     });
     alert(`Wage & Kasbon configuration saved for ${workerName}.`);
@@ -394,7 +399,8 @@ function listenToDefaultWages() {
         insentif: data.insentif || 0,
         uangMakan: data.uangMakan || 0,
         kasbonLama: data.kasbonLama || 0,
-        potonganKasbon: data.potonganKasbon || 0
+        potonganKasbon: data.potonganKasbon || 0,
+        kasbonKantor: data.kasbonKantor || 0
       };
     });
     renderPayrollTable();
@@ -408,6 +414,7 @@ payrollForm.addEventListener('submit', async (e) => {
   const selectedCategory = workerTypeSelect.value;
   const selectedMonth = recordMonthInput.value;
   const kerajinanValue = document.getElementById('hasKerajinanBonus').value === "true";
+  const entryKasbonKantor = parseCurrencyNumber(kasbonKantorInput?.value || 0);
 
   if (!selectedWorkerName || !selectedMonth) {
     alert("Please select worker name and payroll month period.");
@@ -453,6 +460,7 @@ payrollForm.addEventListener('submit', async (e) => {
       workerType: selectedCategory,
       recordMonth: selectedMonth,
       hasKerajinanBonus: selectedCategory === "Sales HPZ" ? false : kerajinanValue,
+      kasbonKantor: entryKasbonKantor,
       metrics: metrics,
       submittedBy: preselectedUser || "Admin",
       timestamp: serverTimestamp()
@@ -499,6 +507,7 @@ function calculateTotalWage(record, settings) {
   const incentive = settings.insentif || 0;
   const bonusKerajinan = record.hasKerajinanBonus ? 300000 : 0;
   const potonganKasbon = settings.potonganKasbon || 0;
+  const kasbonKantor = record.kasbonKantor !== undefined ? record.kasbonKantor : (settings.kasbonKantor || 0);
   const m = record.metrics || {};
 
   let variableBonus = 0;
@@ -506,7 +515,7 @@ function calculateTotalWage(record, settings) {
   switch (record.workerType) {
     case "Admin GPS":
       variableBonus = (m.unitCount || 0) * 5000;
-      return baseSalary + mealAllowance + bonusKerajinan + incentive + variableBonus - potonganKasbon;
+      return baseSalary + mealAllowance + bonusKerajinan + incentive + variableBonus - potonganKasbon - kasbonKantor;
 
     case "Finance GPS":
     case "Finance HPZ":
@@ -514,30 +523,30 @@ function calculateTotalWage(record, settings) {
     case "Team comm":
     case "Gudang":
     case "Driver":
-      return baseSalary + mealAllowance + bonusKerajinan + incentive - potonganKasbon;
+      return baseSalary + mealAllowance + bonusKerajinan + incentive - potonganKasbon - kasbonKantor;
 
     case "Sales HPZ":
       variableBonus = (m.sales3Months || 0) * 0.01;
-      return mealAllowance + variableBonus - potonganKasbon;
+      return mealAllowance + variableBonus - potonganKasbon - kasbonKantor;
 
     case "Mekanik HPZ":
       variableBonus = (m.instalasiHpzAmount || 0) * 0.01;
-      return baseSalary + mealAllowance + bonusKerajinan + incentive + variableBonus - potonganKasbon;
+      return baseSalary + mealAllowance + bonusKerajinan + incentive + variableBonus - potonganKasbon - kasbonKantor;
 
     case "Mekanik GPS":
       variableBonus = ((m.pasangGpsUnits || 0) * 25000) + ((m.cekGpsUnits || 0) * 15000);
-      return baseSalary + mealAllowance + bonusKerajinan + incentive + variableBonus - potonganKasbon;
+      return baseSalary + mealAllowance + bonusKerajinan + incentive + variableBonus - potonganKasbon - kasbonKantor;
 
     case "Mekanik CCTV":
       variableBonus = ((m.pasangCctvUnits || 0) * 25000) + ((m.servisCctvUnits || 0) * 15000);
-      return baseSalary + mealAllowance + bonusKerajinan + incentive + variableBonus - potonganKasbon;
+      return baseSalary + mealAllowance + bonusKerajinan + incentive + variableBonus - potonganKasbon - kasbonKantor;
 
     case "Helper":
       variableBonus = ((m.pasangGpsUnits || 0) * 25000) + ((m.cekGpsUnits || 0) * 15000) + (m.cleaningServiceAllowance || 1000000);
-      return baseSalary + mealAllowance + bonusKerajinan + incentive + variableBonus - potonganKasbon;
+      return baseSalary + mealAllowance + bonusKerajinan + incentive + variableBonus - potonganKasbon - kasbonKantor;
 
     default:
-      return baseSalary + mealAllowance + bonusKerajinan + incentive - potonganKasbon;
+      return baseSalary + mealAllowance + bonusKerajinan + incentive - potonganKasbon - kasbonKantor;
   }
 }
 
@@ -578,7 +587,7 @@ function renderPayrollTable() {
   }
 
   if (filteredRecords.length === 0) {
-    payrollTableBody.innerHTML = `<tr><td colspan="11" class="p-8 text-center text-slate-500 text-xs">No matching financial records located.</td></tr>`;
+    payrollTableBody.innerHTML = `<tr><td colspan="12" class="p-8 text-center text-slate-500 text-xs">No matching financial records located.</td></tr>`;
     if (grandTotalWageDisplay) grandTotalWageDisplay.textContent = "Rp 0";
     if (grandTotalRecordCount) grandTotalRecordCount.textContent = "0 Submissions Included";
     return;
@@ -603,7 +612,7 @@ function renderPayrollTable() {
     const headerRow = document.createElement('tr');
     headerRow.className = 'bg-slate-950/90 border-y border-slate-800';
     headerRow.innerHTML = `
-      <td colspan="11" class="p-3.5 px-4 font-semibold text-indigo-400 tracking-wider text-[10px] uppercase">
+      <td colspan="12" class="p-3.5 px-4 font-semibold text-indigo-400 tracking-wider text-[10px] uppercase">
         ${monthYear} &mdash; ${groupedRecords[monthYear].length} Submissions
       </td>
     `;
@@ -614,10 +623,11 @@ function renderPayrollTable() {
         ? `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-800/80">Yes</span>`
         : `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-950/80 text-rose-400 border border-rose-800/80">No</span>`;
 
-      const settings = defaultWageSettingsMap[record.workerName] || { defaultGajiPokok: 0, insentif: 0, uangMakan: 0, kasbonLama: 0, potonganKasbon: 0 };
+      const settings = defaultWageSettingsMap[record.workerName] || { defaultGajiPokok: 0, insentif: 0, uangMakan: 0, kasbonLama: 0, potonganKasbon: 0, kasbonKantor: 0 };
       const totalWage = calculateTotalWage(record, settings);
       cumulativeGrandTotalWage += totalWage;
 
+      const currentKasbonKantor = record.kasbonKantor !== undefined ? record.kasbonKantor : (settings.kasbonKantor || 0);
       const sisaKasbon = Math.max(0, (settings.kasbonLama || 0) - (settings.potonganKasbon || 0));
 
       const formattedGajiPokok = settings.defaultGajiPokok 
@@ -650,6 +660,7 @@ function renderPayrollTable() {
         <td class="p-4">${formattedUangMakan}</td>
         <td class="p-4">${kerajinanBadge}</td>
         <td class="p-4 font-semibold text-rose-400 font-mono">Rp ${(settings.potonganKasbon || 0).toLocaleString('en-US')}</td>
+        <td class="p-4 font-semibold text-rose-400 font-mono">Rp ${currentKasbonKantor.toLocaleString('en-US')}</td>
         <td class="p-4 font-semibold text-amber-300 font-mono">Rp ${sisaKasbon.toLocaleString('en-US')}</td>
         <td class="p-4 font-bold text-emerald-400 font-mono bg-emerald-950/30">Rp ${totalWage.toLocaleString('en-US')}</td>
         <td class="p-4 text-slate-400 text-[10px]">
@@ -664,6 +675,7 @@ function renderPayrollTable() {
         localStorage.setItem('selectedWorker', JSON.stringify({
           ...record,
           ...settings,
+          kasbonKantor: currentKasbonKantor,
           totalWage: totalWage,
           sisaKasbon: sisaKasbon
         }));
@@ -694,7 +706,7 @@ function renderPayrollTable() {
   if (payrollTableFooter) {
     payrollTableFooter.innerHTML = `
       <tr class="bg-emerald-950/40 text-emerald-300">
-        <td colspan="8" class="p-4 text-right uppercase tracking-wider font-extrabold text-[11px]">Grand Total Payroll Commitment:</td>
+        <td colspan="9" class="p-4 text-right uppercase tracking-wider font-extrabold text-[11px]">Grand Total Payroll Commitment:</td>
         <td class="p-4 font-extrabold font-mono text-emerald-400 text-sm bg-emerald-950/80">Rp ${cumulativeGrandTotalWage.toLocaleString('en-US')}</td>
         <td colspan="2" class="p-4 text-slate-500 font-normal text-[10px]">${filteredRecords.length} Total Workers</td>
       </tr>
