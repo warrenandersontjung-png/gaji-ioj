@@ -32,8 +32,8 @@
         <label for="loginUser" class="block text-[11px] font-semibold text-slate-300 mb-2 uppercase tracking-wider">Select User</label>
         <select id="loginUser" required class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-4 py-3 text-white text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all">
           <option value="" disabled selected>-- Select Your Name --</option>
-          <option value="Christy">Christy (Admin)</option>
-          <option value="Ayu">Ayu (Admin)</option>
+          <option value="Christy">Christy (Admin - Finance HPZ)</option>
+          <option value="Ayu">Ayu (Admin - Finance GPS)</option>
           <option value="Thusen">Mr. Thusen (Owner)</option>
         </select>
       </div>
@@ -64,17 +64,6 @@
         <label for="initialWorkerType" class="block text-[11px] font-semibold text-slate-300 mb-2 uppercase tracking-wider">Worker Category</label>
         <select id="initialWorkerType" required class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-4 py-3 text-white text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all">
           <option value="" disabled selected>-- Select Category --</option>
-          <option value="Admin GPS">Admin GPS</option>
-          <option value="Finance">Finance</option>
-          <option value="Admin HPZ">Admin HPZ</option>
-          <option value="Team comm">Team comm</option>
-          <option value="Sales HPZ">Sales HPZ</option>
-          <option value="Gudang">Gudang</option>
-          <option value="Driver">Driver</option>
-          <option value="Mekanik HPZ">Mekanik HPZ</option>
-          <option value="Mekanik GPS">Mekanik GPS</option>
-          <option value="Mekanik CCTV">Mekanik CCTV</option>
-          <option value="Helper">Helper</option>
         </select>
       </div>
 
@@ -114,12 +103,21 @@
       applyTheme(currentTheme);
     });
 
-    const PASSCODES = { "Christy": "1234", "Ayu": "1234", "Thusen": "8888" };
+    // UPDATED PASSCODES FOR CHRISTY AND AYU
+    const PASSCODES = { "Christy": "098765", "Ayu": "563412", "Thusen": "102938" };
+    
+    // PERMISSIONS MATRIX
+    const USER_CATEGORIES = {
+      "Christy": ["Admin GPS", "Mekanik CCTV", "Finance GPS"],
+      "Ayu": ["Admin HPZ", "Team comm", "Sales HPZ", "Gudang", "Driver", "Mekanik HPZ", "Mekanik GPS", "Helper", "Finance HPZ"]
+    };
+
     const loginForm = document.getElementById('loginForm');
     const categoryForm = document.getElementById('categoryForm');
     const loginError = document.getElementById('loginError');
     const authenticatedUserDisplay = document.getElementById('authenticatedUserDisplay');
     const portalSubtext = document.getElementById('portalSubtext');
+    const initialWorkerType = document.getElementById('initialWorkerType');
     
     let activeAuthenticatedUser = sessionStorage.getItem('activePayrollUser');
 
@@ -131,6 +129,16 @@
         categoryForm.classList.remove('hidden');
         authenticatedUserDisplay.textContent = `${user} (Admin)`;
         portalSubtext.textContent = "Select worker category to start data entry.";
+
+        // POPULATE PERMITTED CATEGORIES
+        initialWorkerType.innerHTML = '<option value="" disabled selected>-- Select Category --</option>';
+        const allowedCats = USER_CATEGORIES[user] || [];
+        allowedCats.forEach(cat => {
+          const opt = document.createElement('option');
+          opt.value = cat;
+          opt.textContent = cat;
+          initialWorkerType.appendChild(opt);
+        });
       }
     }
 
@@ -162,7 +170,7 @@
 
     categoryForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const selectedType = document.getElementById('initialWorkerType').value;
+      const selectedType = initialWorkerType.value;
       if (selectedType && activeAuthenticatedUser) {
         window.location.href = `payroll.html?type=${encodeURIComponent(selectedType)}&user=${encodeURIComponent(activeAuthenticatedUser)}`;
       }
