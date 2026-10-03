@@ -1,179 +1,342 @@
-<!-- index.html -->
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Payroll Portal - Authentication & Selection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark light" />
+  <title>Payroll Portal — Sign In</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base:           'rgb(var(--c-base) / <alpha-value>)',
+            panel:          'rgb(var(--c-panel) / <alpha-value>)',
+            inset:          'rgb(var(--c-inset) / <alpha-value>)',
+            line:           'rgb(var(--c-line) / <alpha-value>)',
+            'line-strong':  'rgb(var(--c-line-soft) / <alpha-value>)',
+            fg:             'rgb(var(--c-fg) / <alpha-value>)',
+            'fg-soft':      'rgb(var(--c-fg-soft) / <alpha-value>)',
+            muted:          'rgb(var(--c-muted) / <alpha-value>)',
+            dim:            'rgb(var(--c-dim) / <alpha-value>)',
+            brand:          'rgb(var(--c-brand) / <alpha-value>)',
+            'brand-solid':  'rgb(var(--c-brand-solid) / <alpha-value>)',
+            success:        'rgb(var(--c-success) / <alpha-value>)',
+            'success-solid':'rgb(var(--c-success-solid) / <alpha-value>)',
+            warn:           'rgb(var(--c-warn) / <alpha-value>)',
+            'warn-solid':   'rgb(var(--c-warn-solid) / <alpha-value>)',
+            danger:         'rgb(var(--c-danger) / <alpha-value>)',
+            'danger-solid': 'rgb(var(--c-danger-solid) / <alpha-value>)'
+          }
+        }
+      }
+    };
+  </script>
+
+  <link rel="stylesheet" href="styles.css?v=4" />
+
+  <!-- =====================================================================
+       THEME TOKENS (inline, AFTER the stylesheet link so it always wins)
+       ===================================================================== -->
+  <style>
+    :root {
+      color-scheme: dark;
+
+      --c-base:           2   6  23;
+      --c-panel:         15  23  42;
+      --c-inset:          2   6  23;
+      --c-line:          30  41  59;
+      --c-line-soft:     51  65  85;
+      --c-fg:           248 250 252;
+      --c-fg-soft:      203 213 225;
+      --c-muted:        148 163 184;
+      --c-dim:          100 116 139;
+
+      --c-brand:        129 140 248;
+      --c-brand-solid:   99 102 241;
+      --c-success:       52 211 153;
+      --c-success-solid: 16 185 129;
+      --c-warn:         251 191  36;
+      --c-warn-solid:   217 119   6;
+      --c-danger:       251 113 133;
+      --c-danger-solid: 225  29  72;
+
+      --glass:        rgba( 15,  23,  42, 0.82);
+      --glow-brand:   rgba( 99, 102, 241, 0.18);
+      --glow-success: rgba( 16, 185, 129, 0.18);
+      --glow-warn:    rgba(245, 158,  11, 0.18);
+    }
+
+    html.light {
+      color-scheme: light;
+
+      --c-base:         241 245 249;
+      --c-panel:        255 255 255;
+      --c-inset:        248 250 252;
+      --c-line:         203 213 225;
+      --c-line-soft:    148 163 184;
+      --c-fg:            15  23  42;
+      --c-fg-soft:       51  65  85;
+      --c-muted:         71  85 105;
+      --c-dim:          100 116 139;
+
+      --c-brand:          79  70 229;
+      --c-brand-solid:    79  70 229;
+      --c-success:         5 150 105;
+      --c-success-solid:   5 150 105;
+      --c-warn:          180  83   9;
+      --c-warn-solid:    180  83   9;
+      --c-danger:        190  18  60;
+      --c-danger-solid:  190  18  60;
+
+      --glass:        rgba(255, 255, 255, 0.92);
+      --glow-brand:   rgba( 99, 102, 241, 0.12);
+      --glow-success: rgba( 16, 185, 129, 0.12);
+      --glow-warn:    rgba(245, 158,  11, 0.12);
+    }
+
+    html { background-color: rgb(var(--c-base)); color: rgb(var(--c-fg)); }
+  </style>
+
+  <!-- Apply the persisted theme before first paint -->
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('payrollTheme') === 'light') {
+          document.documentElement.classList.add('light');
+        }
+      } catch (_) { /* localStorage disabled */ }
+    })();
+  </script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans p-6 flex items-center justify-center relative overflow-hidden antialiased">
 
-  <div class="fixed top-0 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
-  <div class="fixed bottom-0 right-1/4 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none"></div>
+<body class="min-h-screen bg-base text-fg font-sans antialiased flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
 
-  <!-- THEME TOGGLE BUTTON -->
-  <button type="button" id="themeToggleBtn" class="fixed top-6 right-6 p-2.5 rounded-xl glass-card border border-slate-800 text-slate-300 hover:text-white transition-all duration-200 z-50 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
-    <svg id="themeIconSun" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-    <svg id="themeIconMoon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-    <span id="themeModeText">Dark</span>
+  <div class="pointer-events-none fixed -top-32 left-1/4 h-96 w-96 rounded-full bg-brand/10 blur-3xl"></div>
+  <div class="pointer-events-none fixed -bottom-32 right-1/4 h-96 w-96 rounded-full bg-success/10 blur-3xl"></div>
+
+  <button type="button" id="themeToggleBtn"
+          aria-label="Toggle colour theme"
+          class="btn btn-ghost !px-3 !py-2.5 fixed top-5 right-5 z-50 !text-[11px]">
+    <svg id="themeIconSun" class="hidden h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+    </svg>
+    <svg id="themeIconMoon" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+    </svg>
+    <span id="themeModeText" class="hidden sm:inline">Dark</span>
   </button>
 
-  <div class="max-w-xl w-full glass-card glow-indigo p-8 rounded-2xl border border-slate-800 shadow-2xl space-y-6 relative z-10">
-    <div class="text-center space-y-2">
-      <h1 class="text-3xl font-bold text-white tracking-tight">Payroll Portal</h1>
-      <p class="text-slate-400 text-xs tracking-wide" id="portalSubtext">Please authenticate to access the system.</p>
-    </div>
+  <main class="glass glow-brand relative z-10 w-full max-w-xl rounded-2xl border border-line p-7 sm:p-9 shadow-2xl space-y-7">
 
-    <!-- STEP 1: LOGIN FORM -->
-    <form id="loginForm" class="space-y-5">
+    <header class="text-center space-y-1.5">
+      <h1 class="text-3xl font-bold tracking-tight text-fg">Payroll Portal</h1>
+      <p id="portalSubtext" class="text-xs tracking-wide text-muted">
+        Please authenticate to access the system.
+      </p>
+    </header>
+
+    <!-- ── STEP 1 · LOGIN ───────────────────────────────────────── -->
+    <form id="loginForm" class="space-y-5" novalidate>
       <div>
-        <label for="loginUser" class="block text-[11px] font-semibold text-slate-300 mb-2 uppercase tracking-wider">Select User</label>
-        <select id="loginUser" required class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-4 py-3 text-white text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all">
-          <option value="" disabled selected>-- Select Your Name --</option>
-          <option value="Christy">Christy (Admin - Finance HPZ)</option>
-          <option value="Ayu">Ayu (Admin - Finance GPS)</option>
-          <option value="Thusen">Mr. Thusen (Owner)</option>
+        <label for="loginUser" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">
+          Select User
+        </label>
+        <select id="loginUser" required autocomplete="username" class="field">
+          <option value="" disabled selected>— Select Your Name —</option>
+          <option value="Christy">Christy · Admin, Finance HPZ</option>
+          <option value="Ayu">Ayu · Admin, Finance GPS</option>
+          <option value="Thusen">Mr. Thusen · Owner</option>
         </select>
       </div>
 
       <div>
-        <label for="passcode" class="block text-[11px] font-semibold text-slate-300 mb-2 uppercase tracking-wider">Passcode / PIN</label>
-        <input type="password" id="passcode" required placeholder="Enter passcode" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-4 py-3 text-white text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all">
+        <label for="passcode" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">
+          Passcode / PIN
+        </label>
+        <input type="password" id="passcode" required inputmode="numeric"
+               autocomplete="current-password" placeholder="••••••" class="field font-mono tracking-[0.3em]" />
       </div>
 
-      <p id="loginError" class="text-rose-400 text-xs hidden">Invalid passcode. Please try again.</p>
+      <p id="loginError" role="alert"
+         class="hidden rounded-lg border border-danger/40 bg-danger/10 px-3.5 py-2.5 text-xs font-semibold text-danger">
+        Invalid passcode. Please try again.
+      </p>
 
-      <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-600/30 active:scale-[0.99]">
-        Authenticate
-      </button>
+      <button type="submit" class="btn btn-brand w-full">Authenticate</button>
     </form>
 
-    <!-- STEP 2: CATEGORY SELECTION FORM (ADMINS) -->
-    <form id="categoryForm" class="space-y-6 hidden">
-      <div class="bg-indigo-950/40 border border-indigo-800/50 p-4 rounded-xl flex items-center justify-between">
-        <div>
-          <span class="text-[10px] uppercase font-semibold text-slate-400 block tracking-wider">Authenticated As</span>
-          <span id="authenticatedUserDisplay" class="font-bold text-indigo-300 text-xs">-</span>
+    <!-- ── STEP 2 · CATEGORY SELECTION ──────────────────────────── -->
+    <form id="categoryForm" class="hidden space-y-6" novalidate>
+
+      <div class="flex items-center justify-between gap-4 rounded-xl border border-brand/30 bg-brand/5 p-4">
+        <div class="min-w-0">
+          <span class="block text-[10px] font-semibold uppercase tracking-wider text-muted">Authenticated as</span>
+          <span id="authenticatedUserDisplay" class="block truncate text-xs font-bold text-brand">—</span>
         </div>
-        <button type="button" id="logoutBtn" class="text-xs text-rose-400 hover:text-rose-300 font-semibold uppercase tracking-wider transition-colors">Log Out</button>
+        <button type="button" id="logoutBtn"
+                class="shrink-0 text-[11px] font-bold uppercase tracking-wider text-danger transition-opacity hover:opacity-75">
+          Log Out
+        </button>
       </div>
 
       <div>
-        <label for="initialWorkerType" class="block text-[11px] font-semibold text-slate-300 mb-2 uppercase tracking-wider">Worker Category</label>
-        <select id="initialWorkerType" required class="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-4 py-3 text-white text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all">
-          <option value="" disabled selected>-- Select Category --</option>
+        <label for="initialWorkerType" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">
+          Worker Category
+        </label>
+        <select id="initialWorkerType" required class="field">
+          <option value="" disabled selected>— Select Category —</option>
         </select>
       </div>
 
-      <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 active:scale-[0.99]">
-        <span>Continue to Data Entry</span>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+      <button type="submit" class="btn btn-brand w-full">
+        Continue to Data Entry
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+        </svg>
       </button>
     </form>
-  </div>
+
+  </main>
+
+  <div id="toastHost" aria-live="polite" aria-atomic="true"></div>
 
   <script>
-    const themeToggleBtn = document.getElementById('themeToggleBtn');
-    const themeIconSun = document.getElementById('themeIconSun');
-    const themeIconMoon = document.getElementById('themeIconMoon');
-    const themeModeText = document.getElementById('themeModeText');
+    /* ==========================================================
+       Payroll Portal — authentication & routing
+       ========================================================== */
 
-    function applyTheme(theme) {
-      if (theme === 'light') {
-        document.documentElement.classList.add('light');
-        themeIconSun.classList.remove('hidden');
-        themeIconMoon.classList.add('hidden');
-        themeModeText.textContent = 'Light';
-      } else {
-        document.documentElement.classList.remove('light');
-        themeIconSun.classList.add('hidden');
-        themeIconMoon.classList.remove('hidden');
-        themeModeText.textContent = 'Dark';
-      }
-    }
+    const $ = (id) => document.getElementById(id);
 
-    const savedTheme = localStorage.getItem('payrollTheme') || 'dark';
-    applyTheme(savedTheme);
-
-    themeToggleBtn.addEventListener('click', () => {
-      const currentTheme = document.documentElement.classList.contains('light') ? 'dark' : 'light';
-      localStorage.setItem('payrollTheme', currentTheme);
-      applyTheme(currentTheme);
-    });
-
-    // UPDATED PASSCODES FOR CHRISTY, AYU, AND THUSEN
-    const PASSCODES = { "Christy": "098765", "Ayu": "563412", "Thusen": "281920" };
-    
-    // PERMISSIONS MATRIX
-    const USER_CATEGORIES = {
-      "Christy": ["Admin GPS", "Mekanik CCTV", "Finance GPS"],
-      "Ayu": ["Admin HPZ", "Team comm", "Sales HPZ", "Gudang", "Driver", "Mekanik HPZ", "Mekanik GPS", "Helper", "Finance HPZ"]
+    /* Demo credentials. In production this belongs behind a server-side
+       auth provider, never in client source. */
+    const PASSCODES = {
+      Christy: '098765',
+      Ayu:     '563412',
+      Thusen:  '281920'
     };
 
-    const loginForm = document.getElementById('loginForm');
-    const categoryForm = document.getElementById('categoryForm');
-    const loginError = document.getElementById('loginError');
-    const authenticatedUserDisplay = document.getElementById('authenticatedUserDisplay');
-    const portalSubtext = document.getElementById('portalSubtext');
-    const initialWorkerType = document.getElementById('initialWorkerType');
-    
-    let activeAuthenticatedUser = sessionStorage.getItem('activePayrollUser');
+    const USER_CATEGORIES = {
+      Christy: ['Admin GPS', 'Mekanik CCTV', 'Finance GPS'],
+      Ayu:     ['Admin HPZ', 'Team comm', 'Sales HPZ', 'Gudang', 'Driver',
+                'Mekanik HPZ', 'Mekanik GPS', 'Helper', 'Finance HPZ']
+    };
+
+    const THEME_KEY = 'payrollTheme';
+    const themeToggleBtn = $('themeToggleBtn');
+    const themeIconSun   = $('themeIconSun');
+    const themeIconMoon  = $('themeIconMoon');
+    const themeModeText  = $('themeModeText');
+
+    function applyTheme(theme) {
+      const light = theme === 'light';
+      document.documentElement.classList.toggle('light', light);
+      themeIconSun.classList.toggle('hidden', !light);
+      themeIconMoon.classList.toggle('hidden', light);
+      themeModeText.textContent = light ? 'Light' : 'Dark';
+    }
+
+    /* Sync icons with the class the inline bootstrap already applied */
+    applyTheme(document.documentElement.classList.contains('light') ? 'light' : 'dark');
+
+    themeToggleBtn.addEventListener('click', () => {
+      const next = document.documentElement.classList.contains('light') ? 'dark' : 'light';
+      try { localStorage.setItem(THEME_KEY, next); } catch (_) { /* quota */ }
+      applyTheme(next);
+    });
+
+    function toast(message, type = 'info', ms = 3200) {
+      const host = $('toastHost');
+      const el = document.createElement('div');
+      el.className = `toast toast-${type}`;
+      el.textContent = message;
+      host.appendChild(el);
+      setTimeout(() => {
+        el.classList.add('leaving');
+        el.addEventListener('animationend', () => el.remove(), { once: true });
+      }, ms);
+    }
+
+    const loginForm         = $('loginForm');
+    const categoryForm      = $('categoryForm');
+    const loginError        = $('loginError');
+    const portalSubtext     = $('portalSubtext');
+    const authUserDisplay   = $('authenticatedUserDisplay');
+    const initialWorkerType = $('initialWorkerType');
+
+    const SESSION_KEY = 'activePayrollUser';
+    let activeUser = sessionStorage.getItem(SESSION_KEY);
+
+    function goToDashboard(params) {
+      window.location.href = `payroll.html?${new URLSearchParams(params)}`;
+    }
+
+    function showCategoryStep(user) {
+      loginForm.classList.add('hidden');
+      categoryForm.classList.remove('hidden');
+      authUserDisplay.textContent = `${user} · Admin`;
+      portalSubtext.textContent = 'Select a worker category to start data entry.';
+
+      initialWorkerType.replaceChildren();
+      const placeholder = new Option('— Select Category —', '', true, true);
+      placeholder.disabled = true;
+      initialWorkerType.appendChild(placeholder);
+
+      (USER_CATEGORIES[user] || []).forEach((cat) => {
+        initialWorkerType.appendChild(new Option(cat, cat));
+      });
+    }
 
     function routeUser(user) {
+      if (!user) return;
       if (user === 'Thusen') {
-        window.location.href = `payroll.html?user=Thusen`;
+        goToDashboard({ user });
+      } else if (USER_CATEGORIES[user]) {
+        showCategoryStep(user);
       } else {
-        loginForm.classList.add('hidden');
-        categoryForm.classList.remove('hidden');
-        authenticatedUserDisplay.textContent = `${user} (Admin)`;
-        portalSubtext.textContent = "Select worker category to start data entry.";
-
-        // POPULATE PERMITTED CATEGORIES
-        initialWorkerType.innerHTML = '<option value="" disabled selected>-- Select Category --</option>';
-        const allowedCats = USER_CATEGORIES[user] || [];
-        allowedCats.forEach(cat => {
-          const opt = document.createElement('option');
-          opt.value = cat;
-          opt.textContent = cat;
-          initialWorkerType.appendChild(opt);
-        });
+        sessionStorage.removeItem(SESSION_KEY);
       }
     }
 
-    if (activeAuthenticatedUser) routeUser(activeAuthenticatedUser);
+    if (activeUser) routeUser(activeUser);
 
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const selectedUser = document.getElementById('loginUser').value;
-      const enteredPasscode = document.getElementById('passcode').value;
 
-      if (PASSCODES[selectedUser] && PASSCODES[selectedUser] === enteredPasscode) {
-        activeAuthenticatedUser = selectedUser;
-        sessionStorage.setItem('activePayrollUser', selectedUser);
+      const user = $('loginUser').value;
+      const pin  = $('passcode').value;
+
+      if (user && PASSCODES[user] === pin) {
         loginError.classList.add('hidden');
-        routeUser(selectedUser);
+        activeUser = user;
+        sessionStorage.setItem(SESSION_KEY, user);
+        routeUser(user);
       } else {
         loginError.classList.remove('hidden');
+        $('passcode').value = '';
+        $('passcode').focus();
       }
     });
 
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      sessionStorage.removeItem('activePayrollUser');
-      activeAuthenticatedUser = null;
-      loginForm.classList.remove('hidden');
+    $('logoutBtn').addEventListener('click', () => {
+      sessionStorage.removeItem(SESSION_KEY);
+      activeUser = null;
+      loginForm.reset();
       categoryForm.classList.add('hidden');
-      document.getElementById('passcode').value = '';
-      portalSubtext.textContent = "Please authenticate to access the system.";
+      loginForm.classList.remove('hidden');
+      portalSubtext.textContent = 'Please authenticate to access the system.';
+      $('loginUser').focus();
     });
 
     categoryForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const selectedType = initialWorkerType.value;
-      if (selectedType && activeAuthenticatedUser) {
-        window.location.href = `payroll.html?type=${encodeURIComponent(selectedType)}&user=${encodeURIComponent(activeAuthenticatedUser)}`;
-      }
+      const type = initialWorkerType.value;
+      if (!type || !activeUser) return;
+      goToDashboard({ type, user: activeUser });
     });
   </script>
 </body>
