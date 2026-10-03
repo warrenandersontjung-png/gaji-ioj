@@ -1,405 +1,529 @@
-<!-- payroll.html -->
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Payroll & Performance Suite</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark light" />
+  <title>Payroll &amp; Performance Suite</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base:           'rgb(var(--c-base) / <alpha-value>)',
+            panel:          'rgb(var(--c-panel) / <alpha-value>)',
+            inset:          'rgb(var(--c-inset) / <alpha-value>)',
+            line:           'rgb(var(--c-line) / <alpha-value>)',
+            'line-strong':  'rgb(var(--c-line-soft) / <alpha-value>)',
+            fg:             'rgb(var(--c-fg) / <alpha-value>)',
+            'fg-soft':      'rgb(var(--c-fg-soft) / <alpha-value>)',
+            muted:          'rgb(var(--c-muted) / <alpha-value>)',
+            dim:            'rgb(var(--c-dim) / <alpha-value>)',
+            brand:          'rgb(var(--c-brand) / <alpha-value>)',
+            'brand-solid':  'rgb(var(--c-brand-solid) / <alpha-value>)',
+            success:        'rgb(var(--c-success) / <alpha-value>)',
+            'success-solid':'rgb(var(--c-success-solid) / <alpha-value>)',
+            warn:           'rgb(var(--c-warn) / <alpha-value>)',
+            'warn-solid':   'rgb(var(--c-warn-solid) / <alpha-value>)',
+            danger:         'rgb(var(--c-danger) / <alpha-value>)',
+            'danger-solid': 'rgb(var(--c-danger-solid) / <alpha-value>)'
+          }
+        }
+      }
+    };
+  </script>
+
+  <link rel="stylesheet" href="styles.css?v=4" />
+
+  <!-- =====================================================================
+       THEME TOKENS (inline, AFTER the stylesheet link so it always wins)
+       ===================================================================== -->
+  <style>
+    :root {
+      color-scheme: dark;
+
+      --c-base:           2   6  23;
+      --c-panel:         15  23  42;
+      --c-inset:          2   6  23;
+      --c-line:          30  41  59;
+      --c-line-soft:     51  65  85;
+      --c-fg:           248 250 252;
+      --c-fg-soft:      203 213 225;
+      --c-muted:        148 163 184;
+      --c-dim:          100 116 139;
+
+      --c-brand:        129 140 248;
+      --c-brand-solid:   99 102 241;
+      --c-success:       52 211 153;
+      --c-success-solid: 16 185 129;
+      --c-warn:         251 191  36;
+      --c-warn-solid:   217 119   6;
+      --c-danger:       251 113 133;
+      --c-danger-solid: 225  29  72;
+
+      --glass:        rgba( 15,  23,  42, 0.82);
+      --glow-brand:   rgba( 99, 102, 241, 0.18);
+      --glow-success: rgba( 16, 185, 129, 0.18);
+      --glow-warn:    rgba(245, 158,  11, 0.18);
+    }
+
+    html.light {
+      color-scheme: light;
+
+      --c-base:         241 245 249;
+      --c-panel:        255 255 255;
+      --c-inset:        248 250 252;
+      --c-line:         203 213 225;
+      --c-line-soft:    148 163 184;
+      --c-fg:            15  23  42;
+      --c-fg-soft:       51  65  85;
+      --c-muted:         71  85 105;
+      --c-dim:          100 116 139;
+
+      --c-brand:          79  70 229;
+      --c-brand-solid:    79  70 229;
+      --c-success:         5 150 105;
+      --c-success-solid:   5 150 105;
+      --c-warn:          180  83   9;
+      --c-warn-solid:    180  83   9;
+      --c-danger:        190  18  60;
+      --c-danger-solid:  190  18  60;
+
+      --glass:        rgba(255, 255, 255, 0.92);
+      --glow-brand:   rgba( 99, 102, 241, 0.12);
+      --glow-success: rgba( 16, 185, 129, 0.12);
+      --glow-warn:    rgba(245, 158,  11, 0.12);
+    }
+
+    html { background-color: rgb(var(--c-base)); color: rgb(var(--c-fg)); }
+  </style>
+
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('payrollTheme') === 'light') {
+          document.documentElement.classList.add('light');
+        }
+      } catch (_) { /* localStorage disabled */ }
+    })();
+  </script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans p-4 sm:p-8 antialiased selection:bg-indigo-500 selection:text-white relative overflow-x-hidden">
 
-  <div class="fixed top-0 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
-  <div class="fixed bottom-0 right-1/4 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none"></div>
+<body class="min-h-screen bg-base text-fg font-sans antialiased p-4 sm:p-8 relative overflow-x-hidden selection:bg-brand/30">
 
-  <div class="max-w-6xl mx-auto space-y-8 relative z-10">
-    
-    <!-- NAVIGATION HEADER -->
-    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center glass-card p-6 rounded-2xl border border-slate-800/80 shadow-2xl gap-4 transition-all duration-300">
+  <div class="pointer-events-none fixed -top-32 left-1/4 h-96 w-96 rounded-full bg-brand/10 blur-3xl"></div>
+  <div class="pointer-events-none fixed -bottom-32 right-1/4 h-96 w-96 rounded-full bg-success/10 blur-3xl"></div>
+
+  <div class="relative z-10 mx-auto max-w-6xl space-y-7">
+
+    <!-- ══════════════ HEADER ══════════════ -->
+    <header class="glass flex flex-col gap-4 rounded-2xl border border-line p-6 shadow-2xl sm:flex-row sm:items-center sm:justify-between">
+
       <div class="space-y-1">
-        <button type="button" id="exitSessionBtn" class="inline-flex items-center gap-2 text-[11px] text-indigo-400 hover:text-indigo-300 transition-all font-semibold tracking-widest uppercase group">
-          <svg class="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <button type="button" id="exitSessionBtn"
+                class="group inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-brand transition-opacity hover:opacity-80">
+          <svg class="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
           Exit Session
         </button>
-        <h1 class="text-2xl font-bold tracking-tight text-white">Payroll & Performance Suite</h1>
-        <p class="text-slate-400 text-xs">Enterprise performance tracking & financial governance</p>
+        <h1 class="text-2xl font-bold tracking-tight text-fg">Payroll &amp; Performance Suite</h1>
+        <p class="text-xs text-muted">Enterprise performance tracking &amp; financial governance</p>
       </div>
 
-      <div class="flex items-center gap-3">
-        <button type="button" id="themeToggleBtn" class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/80 text-slate-300 hover:text-white transition-all duration-200 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
-          <svg id="themeIconSun" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-          <svg id="themeIconMoon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+      <div class="flex flex-wrap items-center gap-3">
+        <button type="button" id="themeToggleBtn" aria-label="Toggle colour theme"
+                class="btn btn-ghost !px-3 !py-2.5">
+          <svg id="themeIconSun" class="hidden h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+          <svg id="themeIconMoon" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+          </svg>
         </button>
 
-        <div class="flex items-center gap-3 bg-slate-950/80 px-4 py-2.5 rounded-xl border border-slate-800/80 shadow-inner">
-          <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-          <div class="flex flex-col">
-            <span class="text-[9px] font-bold uppercase tracking-widest text-slate-500">Authenticated User</span>
-            <span id="activeUserBadge" class="text-xs font-bold text-indigo-300 tracking-wide">Loading...</span>
+        <div class="flex items-center gap-3 rounded-xl border border-line bg-inset px-4 py-2.5">
+          <span class="h-2 w-2 animate-pulse rounded-full bg-success" aria-hidden="true"></span>
+          <div class="flex flex-col leading-tight">
+            <span class="text-[9px] font-bold uppercase tracking-widest text-dim">Authenticated User</span>
+            <span id="activeUserBadge" class="text-xs font-bold tracking-wide text-brand">Loading…</span>
           </div>
         </div>
       </div>
     </header>
 
-    <!-- ADMIN DATA INPUT FORM (CHRISTY & AYU) -->
-    <div id="adminFormSection" class="glass-card glow-indigo p-6 sm:p-8 rounded-2xl border border-slate-800 shadow-2xl space-y-6">
-      <div class="border-b border-slate-800/80 pb-4">
-        <h2 class="text-base font-semibold text-white tracking-wide">Submit Performance Record</h2>
-        <p class="text-xs text-slate-400 mt-0.5">Record operational worker metrics and punctuality status for the month.</p>
+    <!-- ══════════════ ADMIN · DATA ENTRY ══════════════ -->
+    <section id="adminFormSection"
+             class="glass glow-brand hidden rounded-2xl border border-line p-6 shadow-2xl sm:p-8">
+
+      <div class="mb-6 border-b border-line pb-4">
+        <h2 class="text-base font-semibold tracking-wide text-fg">Submit Performance Record</h2>
+        <p class="mt-0.5 text-xs text-muted">
+          Record operational worker metrics and punctuality status for the month.
+        </p>
       </div>
-      
-      <form id="payrollForm" class="space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+      <form id="payrollForm" class="space-y-6" novalidate>
+
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
           <div>
-            <label class="block text-[11px] font-semibold text-slate-300 mb-2 uppercase tracking-wider">Payroll Month Period</label>
-            <input type="month" id="recordMonth" required class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-indigo-500 transition-all font-mono">
+            <label for="recordMonth" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">
+              Payroll Month Period
+            </label>
+            <input type="month" id="recordMonth" required class="field font-mono" />
           </div>
 
           <div>
-            <label class="block text-[11px] font-semibold text-slate-300 mb-2 uppercase tracking-wider">Worker Category</label>
-            <select id="workerType" disabled class="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-3 text-slate-400 text-xs font-medium cursor-not-allowed outline-none shadow-inner">
-              <option value="Admin GPS">Admin GPS</option>
-              <option value="Finance GPS">Finance GPS</option>
-              <option value="Finance HPZ">Finance HPZ</option>
-              <option value="Admin HPZ">Admin HPZ</option>
-              <option value="Team comm">Team comm</option>
-              <option value="Sales HPZ">Sales HPZ</option>
-              <option value="Gudang">Gudang</option>
-              <option value="Driver">Driver</option>
-              <option value="Mekanik HPZ">Mekanik HPZ</option>
-              <option value="Mekanik GPS">Mekanik GPS</option>
-              <option value="Mekanik CCTV">Mekanik CCTV</option>
-              <option value="Helper">Helper</option>
-            </select>
+            <label for="workerType" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">
+              Worker Category
+            </label>
+            <select id="workerType" class="field"></select>
           </div>
 
           <div>
-            <label class="block text-[11px] font-semibold text-slate-300 mb-2 uppercase tracking-wider">Worker Name</label>
-            <select id="workerName" required class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all shadow-sm">
+            <label for="workerName" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">
+              Worker Name
+            </label>
+            <select id="workerName" required class="field">
               <option value="" disabled selected>Select Worker</option>
             </select>
           </div>
         </div>
 
-        <div id="punctualityBlock" class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950/60 p-5 rounded-xl border border-slate-800/80">
+        <div id="punctualityBlock"
+             class="grid grid-cols-1 gap-5 rounded-xl border border-line bg-inset/60 p-5 md:grid-cols-2">
+
           <div>
-            <label class="block text-[11px] font-semibold text-slate-300 mb-2 uppercase tracking-wider">Bonus Kerajinan / Punctuality Bonus</label>
-            <select id="hasKerajinanBonus" required class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-indigo-500 transition-all">
-              <option value="true">Eligible</option>
+            <label for="hasKerajinanBonus" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">
+              Bonus Kerajinan / Punctuality
+            </label>
+            <select id="hasKerajinanBonus" required class="field">
+              <option value="true">Eligible (+Rp 300.000)</option>
               <option value="false">Ineligible</option>
             </select>
           </div>
 
-          <!-- KASBON KANTOR ONE-TIME DEDUCTION INPUT FOR ADMINS -->
           <div>
-            <label class="block text-[11px] font-semibold text-rose-300 mb-2 uppercase tracking-wider">Kasbon Kantor (Current Month Only IDR)</label>
-            <input type="text" id="kasbonKantorInput" value="0" placeholder="0" class="money-input w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-rose-500 font-mono transition-all">
-            <span class="text-[10px] text-slate-400 mt-1 block">One-time deduction for this month only; resets to zero next month.</span>
+            <label for="kasbonKantorInput" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-danger">
+              Kasbon Kantor · Current Month (IDR)
+            </label>
+            <input type="text" id="kasbonKantorInput" value="0" inputmode="numeric"
+                   class="field money-input font-mono" />
+            <span class="mt-1.5 block text-[10px] text-dim">
+              Auto-filled from the worker's saved configuration; adjust if required.
+            </span>
           </div>
         </div>
 
-        <!-- DYNAMIC INPUTS INJECTED VIA JS -->
-        <div id="dynamicInputs" class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-indigo-950/20 p-5 rounded-xl border border-indigo-900/30"></div>
+        <div id="dynamicInputs"
+             class="grid grid-cols-1 gap-5 rounded-xl border border-brand/25 bg-brand/5 p-5 md:grid-cols-2"></div>
 
-        <button type="submit" id="submitPayrollBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-bold uppercase tracking-wider py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-indigo-600/30 active:scale-[0.98]">
-          Calculate & Synchronize Performance Record
+        <button type="submit" id="submitPayrollBtn" class="btn btn-brand w-full">
+          Calculate &amp; Synchronise Performance Record
         </button>
       </form>
-    </div>
+    </section>
 
-    <!-- OWNER CONFIGURATION & KASBON MANAGEMENT PANEL (MR. THUSEN) -->
-    <div id="gajiPokokSettingsSection" class="hidden glass-card glow-amber rounded-2xl border border-amber-500/30 shadow-2xl transition-all duration-300 overflow-hidden">
-      <div class="flex items-center justify-between p-6 sm:p-8 hover:bg-slate-900/40 transition-colors">
-        <button type="button" id="toggleSettingsBtn" class="flex-1 flex items-center justify-between text-left group">
+    <!-- ══════════════ OWNER · WAGE & LOAN SETTINGS ══════════════ -->
+    <section id="gajiPokokSettingsSection"
+             class="glass glow-warn hidden overflow-hidden rounded-2xl border border-warn/30 shadow-2xl">
+
+      <div class="flex items-center justify-between gap-4 p-6 transition-colors hover:bg-panel/40 sm:p-8">
+        <button type="button" id="toggleSettingsBtn"
+                aria-expanded="false" aria-controls="settingsContent"
+                class="group flex flex-1 items-center justify-between text-left">
           <div>
-            <h2 class="text-base font-semibold text-amber-400 tracking-wide">Base Wage & Worker Loan (Kasbon) Management</h2>
-            <p class="text-xs text-slate-400 mt-0.5">Configure baseline wage standards and manage active worker loans & monthly deductions.</p>
+            <h2 class="text-base font-semibold tracking-wide text-warn">
+              Base Wage &amp; Worker Loan Management
+            </h2>
+            <p class="mt-0.5 text-xs text-muted">
+              Configure baseline wage standards and manage active worker loans &amp; monthly deductions.
+            </p>
           </div>
-          <div class="flex items-center gap-3 mr-4">
-            <span class="text-[10px] font-semibold uppercase tracking-widest text-slate-400 group-hover:text-amber-300 transition-colors" id="settingsToggleLabel">Expand</span>
-            <svg id="settingsChevron" class="w-5 h-5 text-amber-400 transform -rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <div class="mr-2 flex items-center gap-3">
+            <span id="settingsToggleLabel"
+                  class="hidden text-[10px] font-semibold uppercase tracking-widest text-muted transition-colors group-hover:text-warn sm:inline">
+              Expand
+            </span>
+            <svg id="settingsChevron"
+                 class="h-5 w-5 -rotate-90 text-warn transition-transform duration-300"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
           </div>
         </button>
 
-        <!-- WORKER MANAGEMENT SETTINGS GEAR ICON FOR MR. THUSEN -->
-        <button type="button" id="openWorkerRosterModalBtn" class="p-2.5 rounded-xl bg-amber-950/80 hover:bg-amber-900 text-amber-400 border border-amber-800/80 transition-all shadow-lg active:scale-95" title="Manage Workers Roster (Add/Remove)">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <button type="button" id="openWorkerRosterModalBtn"
+                title="Manage worker roster"
+                class="btn btn-ghost !border-warn/40 !p-2.5 !text-warn hover:!bg-warn/10">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
         </button>
       </div>
 
-      <div id="settingsContent" class="collapsible-content collapsed p-6 sm:p-8 space-y-6 border-t border-amber-900/20">
-        <form id="gajiPokokForm" class="space-y-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950/60 p-5 rounded-xl border border-slate-800/80">
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-400 mb-2 uppercase tracking-wider">Category Filter</label>
-              <select id="settingCategorySelect" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-amber-500 transition-all">
-                <option value="ALL">All Categories</option>
-                <option value="Admin GPS">Admin GPS</option>
-                <option value="Finance GPS">Finance GPS</option>
-                <option value="Finance HPZ">Finance HPZ</option>
-                <option value="Admin HPZ">Admin HPZ</option>
-                <option value="Team comm">Team comm</option>
-                <option value="Sales HPZ">Sales HPZ</option>
-                <option value="Gudang">Gudang</option>
-                <option value="Driver">Driver</option>
-                <option value="Mekanik HPZ">Mekanik HPZ</option>
-                <option value="Mekanik GPS">Mekanik GPS</option>
-                <option value="Mekanik CCTV">Mekanik CCTV</option>
-                <option value="Helper">Helper</option>
-              </select>
-            </div>
+      <div id="settingsContent" class="collapsible is-collapsed border-t border-warn/20">
+        <div class="p-6 sm:p-8">
+          <form id="gajiPokokForm" class="space-y-6" novalidate>
 
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-400 mb-2 uppercase tracking-wider">Worker Target</label>
-              <select id="settingWorkerSelect" required class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-amber-500 transition-all">
-                <option value="" disabled selected>Select Worker</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-300 mb-2 uppercase tracking-wider">Base Salary (Gaji Pokok)</label>
-              <input type="text" id="settingGajiPokokAmount" value="0" required placeholder="0" class="money-input w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-amber-500 font-mono transition-all">
-            </div>
-
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-300 mb-2 uppercase tracking-wider">Incentive (Insentif)</label>
-              <input type="text" id="settingInsentifAmount" value="0" required placeholder="0" class="money-input w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-amber-500 font-mono transition-all">
-            </div>
-
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-300 mb-2 uppercase tracking-wider">Meal Allowance (Uang Makan)</label>
-              <input type="text" id="settingUangMakanAmount" value="0" required placeholder="0" class="money-input w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-amber-500 font-mono transition-all">
-            </div>
-          </div>
-
-          <!-- KASBON MANAGEMENT FIELDS FOR MR. THUSEN -->
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-6 bg-amber-950/20 p-5 rounded-xl border border-amber-900/40">
-            <div>
-              <label class="block text-[11px] font-semibold text-amber-300 mb-2 uppercase tracking-wider">Total Existing Loan (Kasbon Lama)</label>
-              <input type="text" id="settingKasbonLama" value="0" required placeholder="0" class="money-input w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-amber-500 font-mono transition-all">
-            </div>
-
-            <div>
-              <label class="block text-[11px] font-semibold text-amber-300 mb-2 uppercase tracking-wider">Monthly Wage Deduction (Potongan Kasbon)</label>
-              <input type="text" id="settingPotonganKasbon" value="0" required placeholder="0" class="money-input w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-amber-500 font-mono transition-all">
-            </div>
-
-            <div>
-              <label class="block text-[11px] font-semibold text-rose-300 mb-2 uppercase tracking-wider">Kasbon Kantor (One-time Deduction)</label>
-              <input type="text" id="settingKasbonKantor" value="0" placeholder="0" class="money-input w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-rose-500 font-mono transition-all">
-            </div>
-
-            <div>
-              <label class="block text-[11px] font-semibold text-amber-300 mb-2 uppercase tracking-wider">Calculated Sisa Kasbon</label>
-              <div id="settingSisaKasbonDisplay" class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-xs text-amber-400 font-bold font-mono">
-                Rp 0
+            <div class="grid grid-cols-1 gap-5 rounded-xl border border-line bg-inset/60 p-5 md:grid-cols-2">
+              <div>
+                <label for="settingCategorySelect" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-muted">
+                  Category Filter
+                </label>
+                <select id="settingCategorySelect" class="field"></select>
+              </div>
+              <div>
+                <label for="settingWorkerSelect" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-muted">
+                  Worker
+                </label>
+                <select id="settingWorkerSelect" required class="field">
+                  <option value="" disabled selected>Select Worker</option>
+                </select>
               </div>
             </div>
-          </div>
 
-          <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white text-xs font-bold uppercase tracking-wider py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-amber-600/20 active:scale-[0.98]">
-            Save Baseline & Loan Configuration
-          </button>
-        </form>
-      </div>
-    </div>
+            <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+              <div>
+                <label for="settingGajiPokokAmount" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">
+                  Base Salary (Gaji Pokok)
+                </label>
+                <input type="text" id="settingGajiPokokAmount" value="0" required inputmode="numeric"
+                       class="field money-input font-mono" />
+              </div>
+              <div>
+                <label for="settingInsentifAmount" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">
+                  Incentive (Insentif)
+                </label>
+                <input type="text" id="settingInsentifAmount" value="0" required inputmode="numeric"
+                       class="field money-input font-mono" />
+              </div>
+              <div>
+                <label for="settingUangMakanAmount" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">
+                  Meal Allowance (Uang Makan)
+                </label>
+                <input type="text" id="settingUangMakanAmount" value="0" required inputmode="numeric"
+                       class="field money-input font-mono" />
+              </div>
+            </div>
 
-    <!-- OWNER FINANCIAL OVERVIEW TABLE WITH GRAND TOTAL -->
-    <div id="ownerSection" class="glass-card glow-emerald rounded-2xl border border-slate-800 shadow-2xl transition-all duration-300 overflow-hidden">
-      <div class="flex items-center justify-between p-6 sm:p-8 hover:bg-slate-900/40 transition-colors">
-        <div class="cursor-pointer flex-1" id="toggleTableTitleArea">
-          <h2 class="text-base font-semibold text-emerald-400 tracking-wide">Financial & Performance Overview</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Real-time compilation of submissions, active loan deductions, and final net wages</p>
+            <div class="grid grid-cols-1 gap-5 rounded-xl border border-warn/30 bg-warn/5 p-5 md:grid-cols-4">
+              <div>
+                <label for="settingKasbonLama" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-warn">
+                  Total Existing Loan
+                </label>
+                <input type="text" id="settingKasbonLama" value="0" required inputmode="numeric"
+                       class="field money-input font-mono" />
+              </div>
+              <div>
+                <label for="settingPotonganKasbon" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-warn">
+                  Monthly Deduction
+                </label>
+                <input type="text" id="settingPotonganKasbon" value="0" required inputmode="numeric"
+                       class="field money-input font-mono" />
+              </div>
+              <div>
+                <label for="settingKasbonKantor" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-danger">
+                  Kasbon Kantor (One-time)
+                </label>
+                <input type="text" id="settingKasbonKantor" value="0" inputmode="numeric"
+                       class="field money-input font-mono" />
+              </div>
+              <div>
+                <span class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-warn">
+                  Remaining Loan
+                </span>
+                <output id="settingSisaKasbonDisplay"
+                        class="block rounded-xl border border-line bg-inset px-4 py-2.5 font-mono text-xs font-bold text-warn">
+                  Rp 0
+                </output>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-warn w-full">
+              Save Baseline &amp; Loan Configuration
+            </button>
+          </form>
         </div>
-        
-        <div class="flex items-center gap-2.5 sm:gap-3">
-          <button type="button" id="toggleFilterBtn" class="inline-flex items-center gap-1.5 bg-slate-950/90 hover:bg-slate-800 text-emerald-400 border border-slate-800 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wider uppercase transition-all">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+      </div>
+    </section>
+
+    <!-- ══════════════ OWNER · FINANCIAL OVERVIEW ══════════════ -->
+    <section id="ownerSection"
+             class="glass glow-success hidden overflow-hidden rounded-2xl border border-line shadow-2xl">
+
+      <div class="flex flex-wrap items-center justify-between gap-4 p-6 transition-colors hover:bg-panel/40 sm:p-8">
+        <button type="button" id="toggleTableTitleArea"
+                class="flex-1 text-left">
+          <h2 class="text-base font-semibold tracking-wide text-success">Financial &amp; Performance Overview</h2>
+          <p class="mt-0.5 text-xs text-muted">
+            Real-time compilation of submissions, loan deductions and net wages.
+          </p>
+        </button>
+
+        <div class="flex items-center gap-2.5">
+          <button type="button" id="toggleFilterBtn"
+                  aria-expanded="false" aria-controls="filterToolbar"
+                  class="btn btn-ghost !border-success/40 !px-3 !py-2 !text-[11px] !text-success hover:!bg-success/10">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+            </svg>
             <span id="filterBtnLabel">Filters</span>
-            <svg id="filterChevron" class="w-3 h-3 transform -rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            <svg id="filterChevron" class="h-3 w-3 -rotate-90 transition-transform duration-200"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
           </button>
 
-          <span class="text-[10px] font-bold uppercase tracking-widest bg-emerald-950/80 text-emerald-300 border border-emerald-800/80 px-2.5 py-1 rounded-full shadow-inner hidden sm:inline-block">
-            Executive View
+          <span class="hidden rounded-full border border-success/40 bg-success/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-success sm:inline-block">
+            Executive
           </span>
 
-          <button type="button" id="toggleTableBtn" class="inline-flex items-center gap-2 text-slate-400 hover:text-emerald-300 transition-colors p-1">
-            <span class="text-[10px] font-semibold uppercase tracking-widest" id="tableToggleLabel">Expand</span>
-            <svg id="tableChevron" class="w-5 h-5 text-emerald-400 transform -rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <button type="button" id="toggleTableBtn"
+                  aria-expanded="true" aria-controls="tableContent"
+                  class="btn btn-ghost !border-transparent !px-2 !py-2 !text-muted hover:!text-success">
+            <span id="tableToggleLabel" class="text-[10px] font-semibold uppercase tracking-widest">Minimise</span>
+            <svg id="tableChevron" class="h-5 w-5 text-success transition-transform duration-300"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
           </button>
         </div>
       </div>
 
-      <div id="tableContent" class="collapsible-content collapsed px-6 sm:px-8 pb-6 sm:pb-8 space-y-5">
-        
-        <!-- GRAND TOTAL SUMMARY CARD FOR MR. THUSEN -->
-        <div class="bg-gradient-to-r from-emerald-950/80 via-slate-900/90 to-emerald-950/80 border border-emerald-800/60 p-5 rounded-xl shadow-inner flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div id="tableContent" class="collapsible space-y-5 px-6 pb-6 sm:px-8 sm:pb-8">
+
+        <div class="flex flex-col items-start justify-between gap-4 rounded-xl border border-success/40 bg-gradient-to-r from-success/10 via-transparent to-success/10 p-5 sm:flex-row sm:items-center">
           <div class="space-y-1">
-            <span class="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400 flex items-center gap-2">
-              <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              Total Payroll Commitment (Sum of Net Wages)
+            <span class="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-widest text-success">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Total Payroll Commitment
             </span>
-            <p id="summarySubtext" class="text-xs text-slate-400">Total net payroll expense across all visible employees for the selected period.</p>
+            <p id="summarySubtext" class="text-xs text-muted">
+              Total net payroll expense across all visible employees.
+            </p>
           </div>
           <div class="text-left sm:text-right">
-            <span id="grandTotalWageDisplay" class="text-2xl font-black font-mono text-emerald-300 tracking-tight block">
-              Rp 0
-            </span>
-            <span id="grandTotalRecordCount" class="text-[10px] font-semibold text-slate-400">0 Submissions Included</span>
+            <span id="grandTotalWageDisplay" class="block font-mono text-2xl font-black tracking-tight text-success">Rp 0</span>
+            <span id="grandTotalRecordCount" class="text-[10px] font-semibold text-muted">0 Submissions Included</span>
           </div>
         </div>
 
-        <div id="filterToolbar" class="collapsible-content collapsed">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-950/80 p-4 rounded-xl border border-slate-800/80 pt-2">
-            
-            <!-- PERIOD / MONTH FILTER -->
-            <div>
-              <label for="tablePeriodFilter" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Filter Period / Month</label>
-              <input type="month" id="tablePeriodFilter" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500 transition-all font-mono">
+        <div id="filterToolbar" class="collapsible is-collapsed">
+          <div class="rounded-xl border border-line bg-inset/70 p-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <label for="tablePeriodFilter" class="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-muted">
+                  Period / Month
+                </label>
+                <input type="month" id="tablePeriodFilter" class="field font-mono" />
+              </div>
+              <div>
+                <label for="tableCategoryFilter" class="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-muted">
+                  Category
+                </label>
+                <select id="tableCategoryFilter" class="field"></select>
+              </div>
+              <div>
+                <label for="tableSearchInput" class="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-muted">
+                  Search Employee
+                </label>
+                <input type="text" id="tableSearchInput" placeholder="Filter by name…" class="field" />
+              </div>
             </div>
-
-            <div>
-              <label for="tableCategoryFilter" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Filter Category</label>
-              <select id="tableCategoryFilter" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500 transition-all">
-                <option value="ALL">All Categories</option>
-                <option value="Admin GPS">Admin GPS</option>
-                <option value="Finance GPS">Finance GPS</option>
-                <option value="Finance HPZ">Finance HPZ</option>
-                <option value="Admin HPZ">Admin HPZ</option>
-                <option value="Team comm">Team comm</option>
-                <option value="Sales HPZ">Sales HPZ</option>
-                <option value="Gudang">Gudang</option>
-                <option value="Driver">Driver</option>
-                <option value="Mekanik HPZ">Mekanik HPZ</option>
-                <option value="Mekanik GPS">Mekanik GPS</option>
-                <option value="Mekanik CCTV">Mekanik CCTV</option>
-                <option value="Helper">Helper</option>
-              </select>
+            <div class="flex justify-end pt-2.5">
+              <button type="button" id="clearPeriodFilterBtn"
+                      class="text-[10px] font-semibold uppercase tracking-wider text-brand transition-opacity hover:opacity-75">
+                Show All Periods
+              </button>
             </div>
-
-            <div>
-              <label for="tableSearchInput" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Search Employee</label>
-              <input type="text" id="tableSearchInput" placeholder="Filter by employee name..." class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500 transition-all">
-            </div>
-
-          </div>
-          <div class="flex justify-end pt-2">
-            <button type="button" id="clearPeriodFilterBtn" class="text-[10px] font-semibold text-indigo-400 hover:text-indigo-300 uppercase tracking-wider transition-colors">
-              Show All Periods
-            </button>
           </div>
         </div>
 
-        <div class="overflow-x-auto rounded-xl border border-slate-800 shadow-2xl">
-          <table class="w-full text-left text-xs text-slate-300">
-            <thead class="bg-slate-950/90 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+        <div class="overflow-x-auto rounded-xl border border-line shadow-2xl">
+          <table class="w-full text-left text-xs text-fg-soft">
+            <thead class="border-b border-line bg-inset text-[10px] uppercase tracking-wider text-muted">
               <tr>
-                <th class="p-4">Employee</th>
-                <th class="p-4">Category</th>
-                <th class="p-4">Period</th>
-                <th class="p-4">Base Salary</th>
-                <th class="p-4">Meal Allowance</th>
-                <th class="p-4">Bonus Kerajinan</th>
-                <th class="p-4">Potongan Kasbon</th>
-                <th class="p-4">Kasbon Kantor</th>
-                <th class="p-4">Sisa Kasbon</th>
-                <th class="p-4 text-emerald-400 font-bold">TOTAL WAGE</th>
-                <th class="p-4">Submitted By</th>
-                <th class="p-4 text-center">Actions</th>
+                <th class="p-4 font-semibold">Employee</th>
+                <th class="p-4 font-semibold">Category</th>
+                <th class="p-4 font-semibold">Period</th>
+                <th class="p-4 font-semibold">Base Salary</th>
+                <th class="p-4 font-semibold">Meal</th>
+                <th class="p-4 font-semibold">Kerajinan</th>
+                <th class="p-4 font-semibold">Loan Deduction</th>
+                <th class="p-4 font-semibold">Kasbon Kantor</th>
+                <th class="p-4 font-semibold">Remaining Loan</th>
+                <th class="p-4 font-bold text-success">TOTAL WAGE</th>
+                <th class="p-4 font-semibold">Submitted By</th>
+                <th class="p-4 text-center font-semibold">Actions</th>
               </tr>
             </thead>
-            <tbody id="payrollTableBody" class="divide-y divide-slate-800/60 bg-slate-900/40">
-              <!-- Table rows populate via JS -->
-            </tbody>
-            <tfoot id="payrollTableFooter" class="bg-slate-950/90 border-t border-slate-800 font-bold text-xs">
-              <!-- Footer sum row populates via JS -->
-            </tfoot>
+            <tbody id="payrollTableBody" class="divide-y divide-line/60 bg-panel/40"></tbody>
+            <tfoot id="payrollTableFooter" class="border-t border-line bg-inset text-xs font-bold"></tfoot>
           </table>
         </div>
       </div>
-    </div>
-
-    <!-- NOTICE BANNER -->
-    <div id="adminNotice" class="hidden glass-card p-5 rounded-2xl border border-slate-800 text-center text-slate-300 text-xs tracking-wide">
-      Record successfully transmitted and synchronized with system database.
-    </div>
+    </section>
 
   </div>
 
-  <!-- WORKER ROSTER MANAGEMENT MODAL FOR MR. THUSEN -->
-  <div id="workerRosterModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
-    <div class="max-w-lg w-full glass-card p-6 rounded-2xl border border-amber-500/40 shadow-2xl space-y-6 bg-slate-900/95 max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+  <!-- ══════════════ ROSTER MODAL ══════════════ -->
+  <div id="workerRosterModal"
+       class="fixed inset-0 z-50 hidden items-center justify-center bg-base/80 p-4 backdrop-blur-md">
+    <div class="glass max-h-[90vh] w-full max-w-lg space-y-6 overflow-y-auto rounded-2xl border border-warn/40 p-6 shadow-2xl">
+
+      <div class="flex items-start justify-between border-b border-line pb-3">
         <div>
-          <h3 class="text-base font-bold text-amber-400">Worker Roster Management</h3>
-          <p class="text-xs text-slate-400">Add new workers or remove existing team members.</p>
+          <h3 class="text-base font-bold text-warn">Worker Roster Management</h3>
+          <p class="text-xs text-muted">Add new workers or remove existing team members.</p>
         </div>
-        <button type="button" id="closeWorkerRosterModalBtn" class="text-slate-400 hover:text-white p-1">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        <button type="button" id="closeWorkerRosterModalBtn" aria-label="Close"
+                class="p-1 text-muted transition-colors hover:text-fg">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
         </button>
       </div>
 
-      <!-- ADD NEW WORKER FORM -->
-      <form id="addWorkerForm" class="space-y-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
-        <span class="text-[11px] font-bold uppercase tracking-wider text-amber-300 block">Add New Employee</span>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <form id="addWorkerForm" class="space-y-4 rounded-xl border border-line bg-inset/60 p-4" novalidate>
+        <span class="block text-[11px] font-bold uppercase tracking-wider text-warn">Add New Employee</span>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
-            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Worker Category</label>
-            <select id="newWorkerCategory" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-500">
-              <option value="Admin GPS">Admin GPS</option>
-              <option value="Finance GPS">Finance GPS</option>
-              <option value="Finance HPZ">Finance HPZ</option>
-              <option value="Admin HPZ">Admin HPZ</option>
-              <option value="Team comm">Team comm</option>
-              <option value="Sales HPZ">Sales HPZ</option>
-              <option value="Gudang">Gudang</option>
-              <option value="Driver">Driver</option>
-              <option value="Mekanik HPZ">Mekanik HPZ</option>
-              <option value="Mekanik GPS">Mekanik GPS</option>
-              <option value="Mekanik CCTV">Mekanik CCTV</option>
-              <option value="Helper">Helper</option>
-            </select>
+            <label for="newWorkerCategory" class="mb-1 block text-[10px] font-bold uppercase text-muted">Category</label>
+            <select id="newWorkerCategory" required class="field"></select>
           </div>
           <div>
-            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Full Name</label>
-            <input type="text" id="newWorkerName" required placeholder="Employee Name" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-500">
+            <label for="newWorkerName" class="mb-1 block text-[10px] font-bold uppercase text-muted">Full Name</label>
+            <input type="text" id="newWorkerName" required placeholder="Employee name" class="field" />
           </div>
         </div>
-        <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs uppercase tracking-wider py-2.5 rounded-xl transition-all shadow-md shadow-amber-600/20">
-          + Add Worker to Roster
-        </button>
+
+        <button type="submit" class="btn btn-warn w-full !py-2.5">+ Add to Roster</button>
       </form>
 
-      <!-- REMOVE WORKERS LIST -->
       <div class="space-y-3">
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-300">Existing Roster</span>
-          <select id="rosterCategoryFilter" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-[11px] text-amber-400 outline-none">
-            <option value="ALL">All Categories</option>
-            <option value="Admin GPS">Admin GPS</option>
-            <option value="Finance GPS">Finance GPS</option>
-            <option value="Finance HPZ">Finance HPZ</option>
-            <option value="Admin HPZ">Admin HPZ</option>
-            <option value="Team comm">Team comm</option>
-            <option value="Sales HPZ">Sales HPZ</option>
-            <option value="Gudang">Gudang</option>
-            <option value="Driver">Driver</option>
-            <option value="Mekanik HPZ">Mekanik HPZ</option>
-            <option value="Mekanik GPS">Mekanik GPS</option>
-            <option value="Mekanik CCTV">Mekanik CCTV</option>
-            <option value="Helper">Helper</option>
-          </select>
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-fg-soft">Existing Roster</span>
+          <select id="rosterCategoryFilter" class="field !w-auto !py-1.5 !text-[11px] !text-warn"></select>
         </div>
-
-        <div id="rosterListContainer" class="divide-y divide-slate-800/80 max-h-60 overflow-y-auto bg-slate-950/60 rounded-xl border border-slate-800 p-2">
-          <!-- Dynamically populated via script.js -->
-        </div>
+        <div id="rosterListContainer"
+             class="max-h-64 divide-y divide-line/70 overflow-y-auto rounded-xl border border-line bg-inset/60 p-2"></div>
       </div>
     </div>
   </div>
+
+  <div id="toastHost" aria-live="polite" aria-atomic="true"></div>
 
   <script type="module" src="script.js"></script>
 </body>
