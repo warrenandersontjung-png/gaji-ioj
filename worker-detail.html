@@ -1,40 +1,1539 @@
-<!-- worker-detail.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Payslip Detail - Slip Gaji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark light" />
+  <title>Payslip — Slip Gaji</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- HTML2PDF LIBRARY FOR DIRECT PDF DOWNLOADS -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <link rel="stylesheet" href="styles.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base:           'rgb(var(--c-base) / <alpha-value>)',
+            panel:          'rgb(var(--c-panel) / <alpha-value>)',
+            inset:          'rgb(var(--c-inset) / <alpha-value>)',
+            line:           'rgb(var(--c-line) / <alpha-value>)',
+            'line-strong':  'rgb(var(--c-line-soft) / <alpha-value>)',
+            fg:             'rgb(var(--c-fg) / <alpha-value>)',
+            'fg-soft':      'rgb(var(--c-fg-soft) / <alpha-value>)',
+            muted:          'rgb(var(--c-muted) / <alpha-value>)',
+            dim:            'rgb(var(--c-dim) / <alpha-value>)',
+            brand:          'rgb(var(--c-brand) / <alpha-value>)',
+            'brand-solid':  'rgb(var(--c-brand-solid) / <alpha-value>)',
+            success:        'rgb(var(--c-success) / <alpha-value>)',
+            'success-solid':'rgb(var(--c-success-solid) / <alpha-value>)',
+            warn:           'rgb(var(--c-warn) / <alpha-value>)',
+            'warn-solid':   'rgb(var(--c-warn-solid) / <alpha-value>)',
+            danger:         'rgb(var(--c-danger) / <alpha-value>)',
+            'danger-solid': 'rgb(var(--c-danger-solid) / <alpha-value>)'
+          }
+        }
+      }
+    };
+  </script>
+
+  <link rel="stylesheet" href="styles.css?v=5" />
+
   <style>
-    /* HIGH-CONTRAST FORMAL PDF DOCUMENT STYLING */
-    .pdf-mode {
-      background-color: #ffffff !important;
-      color: #0f172a !important;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-      box-shadow: none !important;
-      border: 1px solid #cbd5e1 !important;
+    :root {
+      color-scheme: dark;
+
+      --c-base:           2   6  23;
+      --c-panel:         15  23  42;
+      --c-inset:          2   6  23;
+      --c-line:          30  41  59;
+      --c-line-soft:     51  65  85;
+      --c-fg:           248 250 252;
+      --c-fg-soft:      203 213 225;
+      --c-muted:        148 163 184;
+      --c-dim:          100 116 139;
+
+      --c-brand:        129 140 248;
+      --c-brand-solid:   99 102 241;
+      --c-success:       52 211 153;
+      --c-success-solid: 16 185 129;
+      --c-warn:         251 191  36;
+      --c-warn-solid:   217 119   6;
+      --c-danger:       251 113 133;
+      --c-danger-solid: 225  29  72;
+
+      --glass:        rgba( 15,  23,  42, 0.82);
+      --glow-brand:   rgba( 99, 102, 241, 0.18);
+      --glow-success: rgba( 16, 185, 129, 0.18);
+      --glow-warn:    rgba(245, 158,  11, 0.18);
     }
-    .pdf-mode * {
-      border-color: #cbd5e1 !important;
+
+    html.light {
+      color-scheme: light;
+
+      --c-base:         241 245 249;
+      --c-panel:        255 255 255;
+      --c-inset:        248 250 252;
+      --c-line:         203 213 225;
+      --c-line-soft:    148 163 184;
+      --c-fg:            15  23  42;
+      --c-fg-soft:       51  65  85;
+      --c-muted:         71  85 105;
+      --c-dim:          100 116 139;
+
+      --c-brand:          79  70 229;
+      --c-brand-solid:    79  70 229;
+      --c-success:         5 150 105;
+      --c-success-solid:   5 150 105;
+      --c-warn:          180  83   9;
+      --c-warn-solid:    180  83   9;
+      --c-danger:        190  18  60;
+      --c-danger-solid:  190  18  60;
+
+      --glass:        rgba(255, 255, 255, 0.92);
+      --glow-brand:   rgba( 99, 102, 241, 0.12);
+      --glow-success: rgba( 16, 185, 129, 0.12);
+      --glow-warn:    rgba(245, 158,  11, 0.12);
     }
-    .pdf-mode .pdf-text-dark {
-      color: #0f172a !important;
+
+    html { background-color: rgb(var(--c-base)); color: rgb(var(--c-fg)); }
+
+    @media print {
+      .no-print, #pdfStage, #editModal, #toastHost, #pdfStatus { display: none !important; }
+      body { background: #fff !important; color: #0f172a !important; padding: 0 !important; margin: 0 !important; }
+      .payslip-card {
+        background: #fff !important;
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: none !important;
+        width: 100% !important; max-width: 100% !important;
+        padding: 24px !important; margin: 0 !important;
+        color: #0f172a !important;
+      }
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
-    .pdf-mode .pdf-text-emerald {
-      color: #047857 !important;
+
+    #pdfStage {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 794px;
+      min-height: 100vh;
+      z-index: 99990;
+      background: #ffffff !important;
+      overflow: visible;
+      margin: 0;
+      padding: 0;
     }
-    .pdf-mode .pdf-text-rose {
-      color: #be123c !important;
+    #pdfStage.is-open { display: block; }
+
+    #pdfStatus {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99995;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: #0f172a;
+      color: #f1f5f9;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      box-shadow: 0 12px 30px -10px rgba(0, 0, 0, .6);
+      pointer-events: none;
     }
-    .pdf-mode .pdf-text-muted {
-      color: #475569 !important;
+    #pdfStatus.is-open { display: inline-flex; }
+    #pdfStatus .dot {
+      width: 10px; height: 10px;
+      border: 2px solid #64748b;
+      border-top-color: #818cf8;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
     }
-    .pdf-mode .pdf-bg-light {
-      background-color: #f8fafc !important;
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #pdfTemplate {
+      width: 794px;
+      margin: 0;
+      padding: 48px 46px 44px;
+      box-sizing: border-box;
+      background: #ffffff !important;
+      color: #111827;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    #pdfTemplate * { box-sizing: border-box; }
+
+    #pdfTemplate table.meta {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 26px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid #d1d5db;
+    }
+    #pdfTemplate table.meta td {
+      padding: 5px 0;
+      vertical-align: top;
+      font-size: 10.5px;
+      width: 25%;
+    }
+    #pdfTemplate table.meta td.label {
+      padding-top: 7px;
+      font-size: 9px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+    }
+    #pdfTemplate table.meta td.value { font-weight: 600; color: #111827; }
+
+    #pdfTemplate .section-title {
+      margin: 0 0 8px;
+      padding-bottom: 4px;
+      border-bottom: 1.5px solid #1e3a8a;
+      font-size: 10px;
+      font-weight: 800;
+      color: #1e3a8a;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+    }
+    #pdfTemplate .section-title.spaced { margin-top: 24px; }
+
+    #pdfTemplate table.breakdown {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10.5px;
+      table-layout: fixed;
+    }
+    #pdfTemplate table.breakdown th {
+      padding: 7px 10px;
+      background: #f3f4f6;
+      border-bottom: 1px solid #d1d5db;
+      font-size: 9px;
+      font-weight: 700;
+      color: #374151;
+      text-align: left;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+    }
+    #pdfTemplate table.breakdown th.right {
+      text-align: right;
+      width: 160px;
+    }
+    #pdfTemplate table.breakdown td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      color: #111827;
+      word-wrap: break-word;
+      vertical-align: middle;
+    }
+    #pdfTemplate table.breakdown td.right {
+      text-align: right;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    #pdfTemplate table.breakdown tr.subtotal td {
+      border-top: 1.5px solid #d1d5db;
+      background: #fafafa;
+      font-weight: 700;
+    }
+    #pdfTemplate table.breakdown tr.deduction td.right { color: #b91c1c; }
+
+    #pdfTemplate .deduction-detail {
+      margin-top: 3px;
+      font-size: 9px;
+      line-height: 1.45;
+      color: #6b7280;
+      font-weight: 500;
+    }
+    #pdfTemplate .deduction-detail .num {
+      font-family: 'Courier New', monospace;
+      color: #374151;
+    }
+    #pdfTemplate .deduction-detail .remain {
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      color: #b45309;
+    }
+
+    #pdfTemplate .net-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 26px;
+      padding: 14px 18px;
+      background: #1e3a8a;
+      color: #fff;
+      border-radius: 3px;
+      page-break-inside: avoid;
+    }
+    #pdfTemplate .net-box .label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    #pdfTemplate .net-box .sublabel {
+      margin-top: 2px;
+      font-size: 9px;
+      letter-spacing: .5px;
+      opacity: .85;
+    }
+    #pdfTemplate .net-box .amount { font-size: 20px; font-weight: 800; letter-spacing: .5px; }
+
+    #pdfTemplate .footer-note {
+      margin-top: 34px;
+      padding-top: 10px;
+      border-top: 1px solid #d1d5db;
+      font-size: 9px;
+      line-height: 1.55;
+      color: #6b7280;
+      text-align: justify;
+      page-break-inside: avoid;
+    }
+    #pdfTemplate .footer-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 8.5px;
+      color: #9ca3af;
+    }
+  </style>
+
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('payrollTheme') === 'light') {
+          document.documentElement.classList.add('light');
+        }
+      } catch (_) { /* localStorage disabled */ }
+    })();
+  </script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+
+<body class="min-h-screen bg-base text-fg font-sans antialiased p-4 sm:p-8 flex flex-col items-center justify-center">
+
+  <div class="pointer-events-none fixed -top-32 left-1/4 h-96 w-96 rounded-full bg-brand/10 blur-3xl no-print"></div>
+
+  <div class="relative z-10 w-full max-w-2xl space-y-4">
+
+    <!-- ═══════════ ACTION BAR ═══════════ -->
+    <div class="no-print flex flex-wrap items-center justify-between gap-3">
+      <a id="returnBtn" href="payroll.html"
+         class="group inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand transition-opacity hover:opacity-80">
+        <svg class="h-4 w-4 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Return to Dashboard
+      </a>
+
+      <div class="flex items-center gap-2.5">
+        <button type="button" id="editRecordBtn" class="btn btn-warn hidden !px-3.5 !py-2 !text-[11px]">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 012.828 0L19.5 5.5a2 2 0 010 2.828l-8.5 8.5H8v-2.5l8.586-8.586z"/>
+          </svg>
+          Edit
+        </button>
+
+        <button type="button" id="downloadPdfBtn" class="btn btn-success !px-4 !py-2 !text-[11px]">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          <span id="downloadBtnText">Download PDF</span>
+        </button>
+
+        <button type="button" id="themeToggleBtn" aria-label="Toggle colour theme"
+                class="btn btn-ghost !p-2.5">
+          <svg id="themeIconSun" class="hidden h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+          <svg id="themeIconMoon" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ═══════════ PAYSLIP PREVIEW ═══════════ -->
+    <div id="payslipContent"
+         class="payslip-card glass space-y-6 rounded-2xl border border-line p-6 shadow-2xl sm:p-8">
+
+      <div class="flex items-start justify-between gap-4 border-b border-line pb-5">
+        <div class="min-w-0 space-y-1">
+          <span class="text-[10px] font-black uppercase tracking-widest text-brand">Payslip / Slip Gaji</span>
+          <h1 id="workerNameDisplay" class="truncate text-2xl font-extrabold tracking-tight text-fg">Employee Name</h1>
+          <p id="workerTypeDisplay" class="text-xs font-semibold text-muted">Role / Category</p>
+        </div>
+        <div class="shrink-0 text-right space-y-1">
+          <span class="block text-[10px] font-extrabold uppercase tracking-wider text-muted">Payroll Period</span>
+          <span id="periodDisplay" class="font-mono text-sm font-extrabold text-brand">Month Year</span>
+        </div>
+      </div>
+
+      <div id="metricsSummaryBox" class="space-y-1 rounded-xl border border-line bg-inset/70 p-4">
+        <span class="text-[10px] font-extrabold uppercase tracking-wider text-muted">Work Metrics / Performance Summary</span>
+        <p id="metricsText" class="font-mono text-xs font-semibold text-fg">—</p>
+      </div>
+
+      <div class="space-y-2">
+        <h3 class="border-b border-line pb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-muted">
+          Compensation Breakdown
+        </h3>
+
+        <div class="divide-y divide-line/60 text-xs">
+          <div id="gajiPokokRow" class="flex items-center justify-between py-2.5">
+            <span class="font-medium text-fg-soft">Gaji Pokok (Base Salary)</span>
+            <span id="gajiPokokDisplay" class="font-mono font-bold text-fg">Rp 0</span>
+          </div>
+
+          <div id="uangMakanRow" class="flex items-center justify-between py-2.5">
+            <span class="font-medium text-fg-soft">Uang Makan (Meal Allowance)</span>
+            <span id="uangMakanDisplay" class="font-mono font-bold text-fg">Rp 0</span>
+          </div>
+
+          <div id="kerajinanRow" class="flex items-center justify-between py-2.5">
+            <span class="flex items-center gap-2">
+              <span class="font-medium text-fg-soft">Bonus Kerajinan (Punctuality)</span>
+              <span id="kerajinanBadge" class="rounded px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">—</span>
+            </span>
+            <span id="kerajinanDisplay" class="font-mono font-bold text-success">+Rp 0</span>
+          </div>
+
+          <div id="insentifRow" class="flex items-center justify-between py-2.5">
+            <span class="font-medium text-fg-soft">Insentif (Incentive)</span>
+            <span id="insentifDisplay" class="font-mono font-bold text-fg">Rp 0</span>
+          </div>
+
+          <div id="variableBonusRow" class="flex items-center justify-between py-2.5">
+            <span id="variableBonusLabel" class="font-medium text-fg-soft">Komisi / Performance Bonus</span>
+            <span id="variableBonusDisplay" class="font-mono font-bold text-success">+Rp 0</span>
+          </div>
+
+          <div id="cleaningAllowanceRow" class="hidden items-center justify-between py-2.5">
+            <span class="font-medium text-fg-soft">Cleaning Service Allowance</span>
+            <span class="font-mono font-bold text-success">+Rp 1.000.000</span>
+          </div>
+
+          <div id="potonganKasbonRow"
+               class="hidden -mx-2 items-center justify-between rounded-lg border border-danger/30 bg-danger/10 px-2 py-2.5">
+            <div>
+              <span class="block font-semibold text-danger">Potongan Kasbon (Loan Deduction)</span>
+              <span id="sisaKasbonSubtext" class="text-[10px] text-muted">Remaining loan: Rp 0</span>
+            </div>
+            <span id="potonganKasbonDisplay" class="font-mono font-bold text-danger">-Rp 0</span>
+          </div>
+
+          <div id="kasbonKantorRow"
+               class="hidden -mx-2 items-center justify-between rounded-lg border border-danger/40 bg-danger/15 px-2 py-2.5">
+            <div>
+              <span class="block font-semibold text-danger">Kasbon Kantor (One-time)</span>
+              <span class="text-[10px] text-muted">Resets next period</span>
+            </div>
+            <span id="kasbonKantorDisplay" class="font-mono font-bold text-danger">-Rp 0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between rounded-xl border border-success/40 bg-gradient-to-r from-success/15 via-transparent to-success/15 p-5">
+        <div>
+          <span class="block text-[10px] font-extrabold uppercase tracking-widest text-success">
+            THP / Gaji Bersih Diterima
+          </span>
+          <span class="text-[11px] text-muted">Total Net Take Home Pay</span>
+        </div>
+        <span id="totalWageDisplay" class="font-mono text-2xl font-black tracking-tight text-success">Rp 0</span>
+      </div>
+
+      <div class="flex justify-end border-t border-line pt-3 text-[10px] text-dim">
+        Generated: <span id="dateDisplay" class="ml-1 font-mono text-muted">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PDF STAGE ═══════════ -->
+  <div id="pdfStage" aria-hidden="true">
+    <div id="pdfTemplate">
+      <table class="meta">
+        <tr>
+          <td class="label">Employee</td>
+          <td class="value" id="pdfWorkerName">—</td>
+          <td class="label">Payroll Period</td>
+          <td class="value" id="pdfPeriod">—</td>
+        </tr>
+        <tr>
+          <td class="label">Punctuality</td>
+          <td class="value" id="pdfKerajinanStatus">—</td>
+          <td class="label">Issue Date</td>
+          <td class="value" id="pdfIssueDate">—</td>
+        </tr>
+      </table>
+
+      <div class="section-title">Earnings / Penghasilan</div>
+      <table class="breakdown">
+        <thead>
+          <tr><th>Component</th><th class="right">Amount (IDR)</th></tr>
+        </thead>
+        <tbody id="pdfEarningsBody"></tbody>
+      </table>
+
+      <div class="section-title spaced">Deductions / Potongan</div>
+      <table class="breakdown">
+        <thead>
+          <tr><th>Component</th><th class="right">Amount (IDR)</th></tr>
+        </thead>
+        <tbody id="pdfDeductionsBody"></tbody>
+      </table>
+
+      <div class="net-box">
+        <div>
+          <div class="label">Take Home Pay</div>
+          <div class="sublabel">Total Gaji Bersih Diterima</div>
+        </div>
+        <div class="amount" id="pdfNetPay">Rp 0</div>
+      </div>
+
+      <div class="footer-note">
+        This payslip is computer-generated and intended solely for the named employee. It contains
+        confidential information and must not be shared with third parties. Any discrepancy must be
+        reported to the Finance Department within 7 (seven) working days of the issue date.
+      </div>
+      <div class="footer-meta">
+        <span>Ref: <span id="pdfFooterRef">—</span></span>
+        <span>Generated: <span id="pdfFooterDate">—</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="pdfStatus" class="no-print">
+    <span class="dot"></span>
+    <span>Building Payslip…</span>
+  </div>
+
+  <!-- ═══════════ EDIT MODAL ═══════════ -->
+  <div id="editModal"
+       class="no-print fixed inset-0 z-50 hidden items-center justify-center bg-base/80 p-4 backdrop-blur-md">
+    <div class="glass max-h-[90vh] w-full max-w-lg space-y-5 overflow-y-auto rounded-2xl border border-warn/40 p-6 shadow-2xl">
+
+      <div class="flex items-start justify-between border-b border-line pb-3">
+        <div>
+          <h3 class="text-base font-bold text-warn">Edit Payslip Record</h3>
+          <p class="text-xs text-muted">Modify the record identity, wages, or monthly metrics.</p>
+        </div>
+        <button type="button" id="closeEditModalBtn" aria-label="Close"
+                class="p-1 text-muted transition-colors hover:text-fg">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <form id="editForm" class="space-y-4" novalidate>
+
+        <!-- ─── RECORD IDENTITY ──────────────────────────────────── -->
+        <div class="space-y-3 rounded-xl border border-warn/30 bg-warn/5 p-4">
+          <div class="flex items-center justify-between">
+            <span class="block text-[10px] font-bold uppercase tracking-wider text-warn">
+              Record Identity
+            </span>
+            <span class="text-[9px] text-dim">Roster is updated globally</span>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label for="editWorkerName" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-fg-soft">
+                Worker Name
+              </label>
+              <input type="text" id="editWorkerName" required class="field" />
+            </div>
+            <div>
+              <label for="editWorkerCategory" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-fg-soft">
+                Category
+              </label>
+              <select id="editWorkerCategory" required class="field"></select>
+            </div>
+          </div>
+
+          <div>
+            <label for="editRecordMonth" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-fg-soft">
+              Payroll Month Period
+            </label>
+            <input type="month" id="editRecordMonth" required class="field font-mono" />
+          </div>
+
+          <p class="text-[10px] leading-relaxed text-dim">
+            Renaming updates the worker roster. Future payslips and submissions for this worker
+            (by any admin) will use the new name. Existing historical payslips are not modified.
+          </p>
+        </div>
+
+        <!-- ─── WAGE COMPONENTS ──────────────────────────────────── -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="editGajiPokok" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-fg-soft">
+              Gaji Pokok
+            </label>
+            <input type="text" id="editGajiPokok" inputmode="numeric" class="field money-input font-mono" />
+          </div>
+          <div>
+            <label for="editUangMakan" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-fg-soft">
+              Uang Makan
+            </label>
+            <input type="text" id="editUangMakan" inputmode="numeric" class="field money-input font-mono" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label for="editInsentif" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-fg-soft">
+              Insentif
+            </label>
+            <input type="text" id="editInsentif" inputmode="numeric" class="field money-input font-mono" />
+          </div>
+          <div>
+            <label for="editPotonganKasbon" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-warn">
+              Loan Deduction
+            </label>
+            <input type="text" id="editPotonganKasbon" inputmode="numeric" class="field money-input font-mono" />
+          </div>
+          <div>
+            <label for="editKasbonKantor" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-danger">
+              Kasbon Kantor
+            </label>
+            <input type="text" id="editKasbonKantor" inputmode="numeric" class="field money-input font-mono" />
+          </div>
+        </div>
+
+        <div>
+          <label for="editKasbonLama" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-warn">
+            Total Existing Loan (Kasbon Lama)
+          </label>
+          <input type="text" id="editKasbonLama" inputmode="numeric" class="field money-input font-mono" />
+          <span class="mt-1 block text-[10px] text-dim">Set to 0 to clear the loan from this payslip entirely.</span>
+        </div>
+
+        <div>
+          <label for="editKerajinanBonus" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-fg-soft">
+            Bonus Kerajinan
+          </label>
+          <select id="editKerajinanBonus" class="field">
+            <option value="true">Eligible (+Rp 300.000)</option>
+            <option value="false">Ineligible</option>
+          </select>
+        </div>
+
+        <div id="editDynamicMetrics" class="space-y-4 border-t border-line pt-4"></div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" id="cancelEditBtn" class="btn btn-ghost">Cancel</button>
+          <button type="submit" class="btn btn-warn">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toastHost" aria-live="polite" aria-atomic="true"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, updateDoc, setDoc, getDoc, deleteDoc }
+      from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyCID8HBa-82SOKDrJ5-7FfBpHanUyPgISs",
+      authDomain:        "payroll-tracker-55409.firebaseapp.com",
+      projectId:         "payroll-tracker-55409",
+      storageBucket:     "payroll-tracker-55409.firebasestorage.app",
+      messagingSenderId: "336268687896",
+      appId:             "1:336268687896:web:666719cdb5ce72db27616d"
+    };
+
+    const db = getFirestore(initializeApp(firebaseConfig));
+
+    /* ------------------------------------------------------------ helpers */
+    const $  = (id) => document.getElementById(id);
+    const nf = new Intl.NumberFormat('en-US');
+
+    const formatMoney = (v) => {
+      const digits = String(v ?? '').replace(/\D/g, '');
+      return digits ? nf.format(Number(digits)) : '';
+    };
+    const parseMoney = (v) => Number(String(v ?? '').replace(/\D/g, '')) || 0;
+    const rupiah     = (n) => `Rp ${nf.format(Math.round(Number(n) || 0))}`;
+
+    const BONUS_KERAJINAN    = 300_000;
+    const CLEANING_ALLOWANCE = 1_000_000;
+    const RATES = {
+      gpsUnit: 5_000, gpsInstall: 25_000, gpsCheck: 15_000,
+      cctvInstall: 25_000, cctvService: 15_000, salesCommission: 0.01
+    };
+
+    const CATEGORIES = [
+      "Admin GPS", "Finance GPS", "Finance HPZ", "Admin HPZ", "Team comm",
+      "Sales HPZ", "Gudang", "Driver", "Mekanik HPZ", "Mekanik GPS",
+      "Mekanik CCTV", "Helper"
+    ];
+
+    /* Shipped roster — used as the fallback when Firestore has no roster for
+       a category, and as the seed that repairs a wiped category. Keep in
+       sync with script.js. */
+    const DEFAULT_ROSTER = {
+      "Admin GPS":   ["Mei Dhea Cahya Ardika", "Ni Wayan Widiantari", "Tri Maharani"],
+      "Finance GPS": ["Wahyuningsih"],
+      "Finance HPZ": ["Christy Martika"],
+      "Admin HPZ":   ["Ni Luh Ayu Atmi Kamaratih", "Widya Nurliza", "Ni Luh Febriyanti",
+                      "Aldina Verbiana", "Afrilia Indriyani", "Ni Kadek Dwina Suryani Dewi"],
+      "Team comm":   ["Tio Atrik Herdiansyah"],
+      "Sales HPZ":   ["Richard Antonius", "Iwan Pratama"],
+      "Gudang":      ["Pande Gede Ngurah Dana", "Ashera Devi Swarna Vista",
+                      "Nadia Ayu Riskiyah Putri", "Ganna Sine Kustury Vegat"],
+      "Driver":      ["Hersi Arnantyo", "Wiraganda Pattiwaellapia"],
+      "Mekanik HPZ": ["Rohmad Imam Safii", "Ahmad Ardy Firmansyah", "Candra Bayu Pratama",
+                      "Munhamir Amin Almadkur", "Efendi Zulsilhamdi"],
+      "Mekanik GPS": ["Heri Hermansah", "Hauzi Alwi"],
+      "Mekanik CCTV":["Jackson M Bessie", "Stefanus Rofinus R C"],
+      "Helper":      ["Yoyok Ujianto"]
+    };
+
+    function toast(message, type = 'info', ms = 3600) {
+      const host = $('toastHost');
+      const el = document.createElement('div');
+      el.className = `toast toast-${type}`;
+      el.textContent = message;
+      host.appendChild(el);
+      setTimeout(() => {
+        el.classList.add('leaving');
+        el.addEventListener('animationend', () => el.remove(), { once: true });
+      }, ms);
+    }
+
+    /* -------------------------------------------------------------- theme */
+    const THEME_KEY = 'payrollTheme';
+
+    function applyTheme(theme) {
+      const light = theme === 'light';
+      document.documentElement.classList.toggle('light', light);
+      $('themeIconSun')?.classList.toggle('hidden', !light);
+      $('themeIconMoon')?.classList.toggle('hidden', light);
+    }
+
+    applyTheme(document.documentElement.classList.contains('light') ? 'light' : 'dark');
+
+    $('themeToggleBtn').addEventListener('click', () => {
+      const next = document.documentElement.classList.contains('light') ? 'dark' : 'light';
+      try { localStorage.setItem(THEME_KEY, next); } catch (_) { /* quota */ }
+      applyTheme(next);
+    });
+
+    /* -------------------------------------------------------- money inputs */
+    document.addEventListener('input', (e) => {
+      const el = e.target;
+      if (el instanceof HTMLInputElement && el.classList.contains('money-input')) {
+        el.value = formatMoney(el.value);
+      }
+    });
+
+    /* ------------------------------------------------ populate category UI */
+    (function fillCategorySelects() {
+      const sel = $('editWorkerCategory');
+      if (!sel) return;
+      sel.replaceChildren();
+      CATEGORIES.forEach((c) => sel.appendChild(new Option(c, c)));
+    })();
+
+    /* ----------------------------------------------------------- load data */
+    let data = null;
+    try {
+      data = JSON.parse(localStorage.getItem('selectedWorker'));
+    } catch (err) {
+      console.error('Corrupt payslip payload:', err);
+    }
+
+    const activeUser = sessionStorage.getItem('activePayrollUser');
+    const returnBtn  = $('returnBtn');
+    const editBtn    = $('editRecordBtn');
+
+    if (returnBtn) {
+      if (activeUser === 'Thusen') {
+        returnBtn.href = 'payroll.html?user=Thusen';
+      } else if (data?.workerType && activeUser) {
+        returnBtn.href = `payroll.html?type=${encodeURIComponent(data.workerType)}&user=${encodeURIComponent(activeUser)}`;
+      }
+    }
+
+    if (activeUser === 'Thusen') editBtn.classList.remove('hidden');
+
+    /* --------------------------------------------------------- loan maths */
+    function resolveLoan(rec) {
+      const kasbonLama = Math.max(0, Number(rec.kasbonLama) || 0);
+      const rawDeduct  = Math.max(0, Number(rec.potonganKasbon) || 0);
+      const potongan   = kasbonLama > 0 && rawDeduct > 0 ? Math.min(rawDeduct, kasbonLama) : 0;
+      return {
+        kasbonLama,
+        potonganKasbon: potongan,
+        kasbonKantor:   Math.max(0, Number(rec.kasbonKantor) || 0),
+        sisaKasbon:     Math.max(0, kasbonLama - potongan)
+      };
+    }
+
+    function calculateTHP(rec, opts) {
+      const {
+        gajiPokok, uangMakan, insentif, potonganKasbon,
+        kasbonKantor, kerajinanEligible, metrics
+      } = opts;
+
+      const bonusKerajinan = kerajinanEligible ? BONUS_KERAJINAN : 0;
+      const deductions = (potonganKasbon || 0) + (kasbonKantor || 0);
+      const m = metrics || {};
+
+      switch (rec.workerType) {
+        case 'Admin GPS':
+          return gajiPokok + uangMakan + insentif + bonusKerajinan
+               + (m.unitCount || 0) * RATES.gpsUnit - deductions;
+
+        case 'Sales HPZ':
+          return uangMakan + (m.sales3Months || 0) * RATES.salesCommission - deductions;
+
+        case 'Mekanik HPZ':
+          return gajiPokok + uangMakan + insentif + bonusKerajinan
+               + (m.instalasiHpzAmount || 0) * RATES.salesCommission - deductions;
+
+        case 'Mekanik GPS':
+          return gajiPokok + uangMakan + insentif + bonusKerajinan
+               + (m.pasangGpsUnits || 0) * RATES.gpsInstall
+               + (m.cekGpsUnits || 0) * RATES.gpsCheck - deductions;
+
+        case 'Mekanik CCTV':
+          return gajiPokok + uangMakan + insentif + bonusKerajinan
+               + (m.pasangCctvUnits || 0) * RATES.cctvInstall
+               + (m.servisCctvUnits || 0) * RATES.cctvService - deductions;
+
+        case 'Helper':
+          return gajiPokok + uangMakan + insentif + bonusKerajinan
+               + (m.pasangGpsUnits || 0) * RATES.gpsInstall
+               + (m.cekGpsUnits || 0) * RATES.gpsCheck
+               + (m.cleaningServiceAllowance ?? CLEANING_ALLOWANCE) - deductions;
+
+        default:
+          return gajiPokok + uangMakan + insentif + bonusKerajinan - deductions;
+      }
+    }
+
+    /* ------------------------------------------------- on-screen payslip */
+    function renderPayslipView(record) {
+      if (!record) return;
+
+      $('workerNameDisplay').textContent = record.workerName || 'Employee';
+      $('workerTypeDisplay').textContent = `Category: ${record.workerType || 'Standard'}`;
+      $('periodDisplay').textContent = record.recordMonth
+        ? new Date(`${record.recordMonth}-01`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+        : 'N/A';
+
+      const isSales = record.workerType === 'Sales HPZ';
+
+      $('gajiPokokRow').classList.toggle('hidden', isSales);
+      $('kerajinanRow').classList.toggle('hidden', isSales);
+      $('gajiPokokRow').classList.toggle('flex', !isSales);
+      $('kerajinanRow').classList.toggle('flex', !isSales);
+
+      if (!isSales) {
+        $('gajiPokokDisplay').textContent = rupiah(record.defaultGajiPokok || 0);
+      }
+      $('uangMakanDisplay').textContent = rupiah(record.uangMakan || 0);
+
+      const insentifValue = Number(record.insentif) || 0;
+      const insentifRow   = $('insentifRow');
+      if (!isSales && insentifValue > 0) {
+        insentifRow.classList.remove('hidden');
+        insentifRow.classList.add('flex');
+        $('insentifDisplay').textContent = rupiah(insentifValue);
+      } else {
+        insentifRow.classList.add('hidden');
+        insentifRow.classList.remove('flex');
+      }
+
+      const badge = $('kerajinanBadge');
+      if (record.hasKerajinanBonus) {
+        badge.textContent = 'Eligible';
+        badge.className = 'rounded border border-success/40 bg-success/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-success';
+        $('kerajinanDisplay').textContent = `+${rupiah(BONUS_KERAJINAN)}`;
+      } else {
+        badge.textContent = 'Ineligible';
+        badge.className = 'rounded border border-danger/40 bg-danger/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-danger';
+        $('kerajinanDisplay').textContent = 'Rp 0';
+      }
+
+      const m = record.metrics || {};
+      const metricsBox  = $('metricsSummaryBox');
+      const varRow      = $('variableBonusRow');
+      const cleaningRow = $('cleaningAllowanceRow');
+      const varDisplay  = $('variableBonusDisplay');
+      const varLabel    = $('variableBonusLabel');
+      const metricsText = $('metricsText');
+
+      cleaningRow.classList.add('hidden');
+      cleaningRow.classList.remove('flex');
+      metricsBox.classList.remove('hidden');
+      varRow.classList.remove('hidden');
+      varRow.classList.add('flex');
+
+      let variableAmt = 0;
+
+      switch (record.workerType) {
+        case 'Admin GPS':
+          variableAmt = (m.unitCount || 0) * RATES.gpsUnit;
+          metricsText.textContent = `GPS units sold: ${m.unitCount || 0} × ${rupiah(RATES.gpsUnit)}`;
+          varLabel.textContent = 'Bonus Penjualan GPS';
+          break;
+
+        case 'Sales HPZ':
+          variableAmt = (m.sales3Months || 0) * RATES.salesCommission;
+          metricsText.textContent = `3-month sales total: ${rupiah(m.sales3Months || 0)} (1% commission)`;
+          varLabel.textContent = 'Komisi Penjualan (1%)';
+          break;
+
+        case 'Mekanik HPZ':
+          variableAmt = (m.instalasiHpzAmount || 0) * RATES.salesCommission;
+          metricsText.textContent = `Monthly installation sales: ${rupiah(m.instalasiHpzAmount || 0)} (1% commission)`;
+          varLabel.textContent = 'Komisi Instalasi HPZ (1%)';
+          break;
+
+        case 'Mekanik GPS':
+          variableAmt = (m.pasangGpsUnits || 0) * RATES.gpsInstall
+                      + (m.cekGpsUnits || 0) * RATES.gpsCheck;
+          metricsText.textContent = `Pasang GPS: ${m.pasangGpsUnits || 0} · Cek GPS: ${m.cekGpsUnits || 0}`;
+          varLabel.textContent = 'Bonus Unit GPS';
+          break;
+
+        case 'Mekanik CCTV':
+          variableAmt = (m.pasangCctvUnits || 0) * RATES.cctvInstall
+                      + (m.servisCctvUnits || 0) * RATES.cctvService;
+          metricsText.textContent = `Pasang CCTV: ${m.pasangCctvUnits || 0} · Servis CCTV: ${m.servisCctvUnits || 0}`;
+          varLabel.textContent = 'Bonus CCTV';
+          break;
+
+        case 'Helper':
+          variableAmt = (m.pasangGpsUnits || 0) * RATES.gpsInstall
+                      + (m.cekGpsUnits || 0) * RATES.gpsCheck;
+          metricsText.textContent = `Pasang GPS: ${m.pasangGpsUnits || 0} · Cek GPS: ${m.cekGpsUnits || 0}`;
+          varLabel.textContent = 'Bonus Unit GPS (Helper)';
+          cleaningRow.classList.remove('hidden');
+          cleaningRow.classList.add('flex');
+          break;
+
+        default:
+          metricsBox.classList.add('hidden');
+          varRow.classList.add('hidden');
+          varRow.classList.remove('flex');
+      }
+
+      if (!varRow.classList.contains('hidden')) {
+        varDisplay.textContent = variableAmt > 0 ? `+${rupiah(variableAmt)}` : 'Rp 0';
+      }
+
+      const loan = resolveLoan(record);
+
+      const potonganRow = $('potonganKasbonRow');
+      if (loan.potonganKasbon > 0) {
+        potonganRow.classList.remove('hidden');
+        potonganRow.classList.add('flex');
+        $('potonganKasbonDisplay').textContent = `-${rupiah(loan.potonganKasbon)}`;
+        $('sisaKasbonSubtext').textContent =
+          `${rupiah(loan.kasbonLama)} − ${rupiah(loan.potonganKasbon)} = ${rupiah(loan.sisaKasbon)} remaining`;
+      } else {
+        potonganRow.classList.add('hidden');
+        potonganRow.classList.remove('flex');
+      }
+
+      const kantorRow = $('kasbonKantorRow');
+      if (loan.kasbonKantor > 0) {
+        kantorRow.classList.remove('hidden');
+        kantorRow.classList.add('flex');
+        $('kasbonKantorDisplay').textContent = `-${rupiah(loan.kasbonKantor)}`;
+      } else {
+        kantorRow.classList.add('hidden');
+        kantorRow.classList.remove('flex');
+      }
+
+      const net = calculateTHP(record, {
+        gajiPokok:         Number(record.defaultGajiPokok || 0),
+        uangMakan:         Number(record.uangMakan || 0),
+        insentif:          insentifValue,
+        potonganKasbon:    loan.potonganKasbon,
+        kasbonKantor:      loan.kasbonKantor,
+        kerajinanEligible: !!record.hasKerajinanBonus,
+        metrics:           m
+      });
+      $('totalWageDisplay').textContent = rupiah(net);
+
+      const stamp = record.formattedDateTime
+        || (record.dateISO ? new Date(record.dateISO).toLocaleDateString('en-US',
+             { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—');
+      $('dateDisplay').textContent = stamp;
+    }
+
+    /* -------------------------------------------------------- PDF builder */
+    function buildPdfContent(record) {
+      const m       = record.metrics || {};
+      const isSales = record.workerType === 'Sales HPZ';
+      const loan    = resolveLoan(record);
+      const insentifValue = Number(record.insentif) || 0;
+
+      $('pdfWorkerName').textContent = record.workerName || '—';
+      $('pdfPeriod').textContent = record.recordMonth
+        ? new Date(`${record.recordMonth}-01`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+        : '—';
+
+      $('pdfKerajinanStatus').textContent = isSales
+        ? 'N/A (commission based)'
+        : record.hasKerajinanBonus ? `Eligible (+${rupiah(BONUS_KERAJINAN)})` : 'Ineligible';
+
+      const issue = record.timestamp?.toDate
+        ? record.timestamp.toDate()
+        : (record.dateISO ? new Date(record.dateISO) : new Date());
+      $('pdfIssueDate').textContent = issue.toLocaleDateString('en-US',
+        { day: '2-digit', month: 'long', year: 'numeric' });
+
+      const docMonth = record.recordMonth ? record.recordMonth.replace('-', '') : 'XXXXXX';
+      const nameTag  = (record.workerName || 'X').replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase() || 'XXX';
+      const docNo    = `PAY-${docMonth}-${nameTag}`;
+      $('pdfFooterRef').textContent = docNo;
+
+      const earnings = [];
+      if (!isSales) {
+        earnings.push(['Gaji Pokok (Base Salary)', Number(record.defaultGajiPokok || 0)]);
+      }
+      earnings.push(['Uang Makan (Meal Allowance)', Number(record.uangMakan || 0)]);
+      if (!isSales) {
+        if (insentifValue > 0) {
+          earnings.push(['Insentif (Incentive)', insentifValue]);
+        }
+        if (record.hasKerajinanBonus) {
+          earnings.push(['Bonus Kerajinan (Punctuality)', BONUS_KERAJINAN]);
+        }
+      }
+
+      switch (record.workerType) {
+        case 'Admin GPS':
+          earnings.push([`Bonus Penjualan GPS (${m.unitCount || 0} × ${rupiah(RATES.gpsUnit)})`,
+                         (m.unitCount || 0) * RATES.gpsUnit]);
+          break;
+        case 'Sales HPZ':
+          earnings.push([`Komisi Penjualan 1% (${rupiah(m.sales3Months || 0)})`,
+                         Math.round((m.sales3Months || 0) * RATES.salesCommission)]);
+          break;
+        case 'Mekanik HPZ':
+          earnings.push([`Komisi Instalasi 1% (${rupiah(m.instalasiHpzAmount || 0)})`,
+                         Math.round((m.instalasiHpzAmount || 0) * RATES.salesCommission)]);
+          break;
+        case 'Mekanik GPS':
+          earnings.push([`Bonus Pasang GPS (${m.pasangGpsUnits || 0} × ${rupiah(RATES.gpsInstall)})`,
+                         (m.pasangGpsUnits || 0) * RATES.gpsInstall]);
+          earnings.push([`Bonus Cek GPS (${m.cekGpsUnits || 0} × ${rupiah(RATES.gpsCheck)})`,
+                         (m.cekGpsUnits || 0) * RATES.gpsCheck]);
+          break;
+        case 'Mekanik CCTV':
+          earnings.push([`Bonus Pasang CCTV (${m.pasangCctvUnits || 0} × ${rupiah(RATES.cctvInstall)})`,
+                         (m.pasangCctvUnits || 0) * RATES.cctvInstall]);
+          earnings.push([`Bonus Servis CCTV (${m.servisCctvUnits || 0} × ${rupiah(RATES.cctvService)})`,
+                         (m.servisCctvUnits || 0) * RATES.cctvService]);
+          break;
+        case 'Helper':
+          earnings.push([`Bonus Pasang GPS (${m.pasangGpsUnits || 0} × ${rupiah(RATES.gpsInstall)})`,
+                         (m.pasangGpsUnits || 0) * RATES.gpsInstall]);
+          earnings.push([`Bonus Cek GPS (${m.cekGpsUnits || 0} × ${rupiah(RATES.gpsCheck)})`,
+                         (m.cekGpsUnits || 0) * RATES.gpsCheck]);
+          earnings.push(['Cleaning Service Allowance',
+                         Number(m.cleaningServiceAllowance ?? CLEANING_ALLOWANCE)]);
+          break;
+      }
+
+      const totalEarnings = earnings.reduce((s, [, v]) => s + (Number(v) || 0), 0);
+
+      const eBody = $('pdfEarningsBody');
+      eBody.replaceChildren();
+      earnings.forEach(([label, val]) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${label}</td><td class="right">${rupiah(val)}</td>`;
+        eBody.appendChild(tr);
+      });
+      const eSub = document.createElement('tr');
+      eSub.className = 'subtotal';
+      eSub.innerHTML = `<td>Total Earnings</td><td class="right">${rupiah(totalEarnings)}</td>`;
+      eBody.appendChild(eSub);
+
+      const deductions = [];
+
+      if (loan.potonganKasbon > 0) {
+        const label = `
+          <div style="font-weight:600;color:#111827;">Potongan Kasbon (Loan Deduction)</div>
+          <div class="deduction-detail">
+            Previous: <span class="num">${rupiah(loan.kasbonLama)}</span>
+            &nbsp;&minus;&nbsp;
+            Monthly deduction: <span class="num">${rupiah(loan.potonganKasbon)}</span>
+            &nbsp;=&nbsp;
+            <span class="remain">${rupiah(loan.sisaKasbon)}</span> remaining
+          </div>`;
+        deductions.push([label, loan.potonganKasbon]);
+      }
+
+      if (loan.kasbonKantor > 0) {
+        deductions.push(['Kasbon Kantor (One-time, current month)', loan.kasbonKantor]);
+      }
+
+      const totalDeductions = deductions.reduce((s, [, v]) => s + (Number(v) || 0), 0);
+
+      const dBody = $('pdfDeductionsBody');
+      dBody.replaceChildren();
+      if (deductions.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="2" style="text-align:center;color:#6b7280;font-style:italic;">No deductions this period</td>`;
+        dBody.appendChild(tr);
+      } else {
+        deductions.forEach(([label, val]) => {
+          const tr = document.createElement('tr');
+          tr.className = 'deduction';
+          tr.innerHTML = `<td>${label}</td><td class="right">-${rupiah(val)}</td>`;
+          dBody.appendChild(tr);
+        });
+      }
+      const dSub = document.createElement('tr');
+      dSub.className = 'subtotal';
+      dSub.innerHTML = `<td>Total Deductions</td><td class="right" style="color:#b91c1c;">-${rupiah(totalDeductions)}</td>`;
+      dBody.appendChild(dSub);
+
+      $('pdfNetPay').textContent = rupiah(totalEarnings - totalDeductions);
+
+      $('pdfFooterDate').textContent = new Date().toLocaleString('en-US', {
+        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+    }
+
+    /* --------------------------------------------------------------- boot */
+    if (data) {
+      renderPayslipView(data);
+    } else {
+      document.querySelector('.max-w-2xl').innerHTML = `
+        <p class="text-center text-xs text-muted">
+          No payslip data found.
+          <a href="index.html" class="text-brand underline">Return to selection</a>
+        </p>`;
+    }
+
+    /* ==========================================================
+       PDF DOWNLOAD
+       ========================================================== */
+    const downloadBtn  = $('downloadPdfBtn');
+    const downloadText = $('downloadBtnText');
+    const pdfStage     = $('pdfStage');
+    const pdfStatus    = $('pdfStatus');
+    const pdfTemplate  = $('pdfTemplate');
+
+    function nextFrame() {
+      return new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    }
+
+    downloadBtn.addEventListener('click', async () => {
+      if (!data) { toast('No payslip data to export.', 'error'); return; }
+
+      if (typeof window.html2pdf !== 'function') {
+        toast('PDF library failed to load. Check your connection and reload.', 'error', 6000);
+        return;
+      }
+
+      downloadBtn.disabled = true;
+      downloadText.textContent = 'Generating…';
+
+      try {
+        buildPdfContent(data);
+
+        pdfStage.classList.add('is-open');
+        pdfStatus.classList.add('is-open');
+
+        void pdfStage.offsetHeight;
+        await nextFrame();
+
+        const rect = pdfTemplate.getBoundingClientRect();
+        if (rect.width < 10 || rect.height < 10) {
+          throw new Error(`Template has no layout (${rect.width}×${rect.height})`);
+        }
+
+        const safeName   = (data.workerName || 'Employee').replace(/[^a-zA-Z0-9]/g, '_');
+        const safePeriod = (data.recordMonth || 'Period').replace(/[^a-zA-Z0-9]/g, '_');
+
+        await window.html2pdf().set({
+          margin:      [0.4, 0.4, 0.4, 0.4],
+          filename:    `Slip_Gaji_${safeName}_${safePeriod}.pdf`,
+          image:       { type: 'jpeg', quality: 0.98 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            x: 0,
+            y: 0,
+            width: 794,
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: 794,
+            windowHeight: 1200
+          },
+          jsPDF:       { unit: 'in', format: 'a4', orientation: 'portrait' },
+          pagebreak:   { mode: ['css', 'legacy'] }
+        }).from(pdfTemplate).save();
+
+        toast('Payslip PDF downloaded.', 'success');
+
+      } catch (err) {
+        console.error('PDF generation failed:', err);
+        toast('Could not build the PDF. Please try again.', 'error');
+      } finally {
+        pdfStage.classList.remove('is-open');
+        pdfStatus.classList.remove('is-open');
+        downloadBtn.disabled = false;
+        downloadText.textContent = 'Download PDF';
+      }
+    });
+
+    /* ==========================================================
+       OWNER EDIT MODAL
+       ========================================================== */
+    const editModal   = $('editModal');
+    const editForm    = $('editForm');
+    const editMetrics = $('editDynamicMetrics');
+
+    function openModal() {
+      editModal.classList.remove('hidden');
+      editModal.classList.add('flex');
+    }
+    function closeModal() {
+      editModal.classList.add('hidden');
+      editModal.classList.remove('flex');
+    }
+
+    $('closeEditModalBtn').addEventListener('click', closeModal);
+    $('cancelEditBtn').addEventListener('click', closeModal);
+    editModal.addEventListener('click', (e) => { if (e.target === editModal) closeModal(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !editModal.classList.contains('hidden')) closeModal();
+    });
+
+    /* ---------- roster helpers ---------- */
+
+    /**
+     * Read the persisted worker list for a category.
+     * Falls back to the shipped defaults when the Firestore document is
+     * missing OR empty. This is what stops a rename from accidentally
+     * wiping the category for every other admin.
+     */
+    async function readRosterCategory(cat) {
+      try {
+        const snap = await getDoc(doc(db, 'worker_roster', cat));
+        if (snap.exists()) {
+          const workers = snap.data().workers;
+          if (Array.isArray(workers) && workers.length > 0) {
+            return workers.slice();
+          }
+        }
+      } catch (err) {
+        console.warn('Could not read roster category:', cat, err);
+      }
+      return (DEFAULT_ROSTER[cat] || []).slice();
+    }
+
+    /**
+     * Apply a rename / category change to the Firestore roster.
+     * Uses readRosterCategory so we never overwrite a good list with an
+     * empty one, even if the category has never been persisted before.
+     */
+    async function migrateRosterIdentity(oldName, oldCat, newName, newCat) {
+      if (oldName === newName && oldCat === newCat) return;
+
+      try {
+        if (oldCat === newCat) {
+          const list = await readRosterCategory(oldCat);
+          const renamed = list.map((w) => (w === oldName ? newName : w));
+          const unique  = [...new Set(renamed)].sort((a, b) => a.localeCompare(b));
+
+          await setDoc(doc(db, 'worker_roster', oldCat), {
+            category: oldCat,
+            workers:  unique
+          });
+          return;
+        }
+
+        /* Category changed — pull the worker out of old … */
+        const oldList = await readRosterCategory(oldCat);
+        const cleaned = oldList.filter((w) => w !== oldName);
+
+        await setDoc(doc(db, 'worker_roster', oldCat), {
+          category: oldCat,
+          workers:  cleaned
+        });
+
+        /* … and push them into new */
+        const newList = await readRosterCategory(newCat);
+        const merged  = [...new Set([...newList, newName])].sort((a, b) => a.localeCompare(b));
+
+        await setDoc(doc(db, 'worker_roster', newCat), {
+          category: newCat,
+          workers:  merged
+        });
+      } catch (err) {
+        console.error('Roster migration failed:', err);
+        toast('Warning: worker roster could not be updated.', 'error', 5000);
+      }
+    }
+
+    /** Delete the wage document that was stored under the old name. */
+    async function deleteStaleWageDoc(oldName, newName) {
+      if (oldName === newName) return;
+      try {
+        await deleteDoc(doc(db, 'default_wages', oldName));
+      } catch (err) {
+        console.warn('Could not delete old wage doc (may not exist):', err);
+      }
+    }
+
+    /* ---------- open modal ---------- */
+    editBtn.addEventListener('click', async () => {
+      if (!data) return;
+
+      editBtn.disabled = true;
+
+      try {
+        const [recordSnap, wageSnap] = await Promise.all([
+          data.id ? getDoc(doc(db, 'payroll_records', data.id)) : Promise.resolve(null),
+          data.workerName ? getDoc(doc(db, 'default_wages', data.workerName)) : Promise.resolve(null)
+        ]);
+
+        if (recordSnap?.exists()) {
+          data = { ...data, ...recordSnap.data(), id: data.id };
+          localStorage.setItem('selectedWorker', JSON.stringify(data));
+        }
+        if (wageSnap?.exists()) {
+          data = { ...data, ...wageSnap.data() };
+        }
+      } catch (err) {
+        console.warn('Falling back to cached payslip data:', err);
+      } finally {
+        editBtn.disabled = false;
+      }
+
+      populateEditForm(data);
+      openModal();
+    });
+
+    function populateEditForm(record) {
+      $('editWorkerName').value     = record.workerName || '';
+      $('editWorkerCategory').value = record.workerType || CATEGORIES[0];
+      $('editRecordMonth').value    = record.recordMonth || '';
+
+      $('editGajiPokok').value      = formatMoney(record.defaultGajiPokok || 0);
+      $('editUangMakan').value      = formatMoney(record.uangMakan || 0);
+      $('editInsentif').value       = formatMoney(record.insentif || 0);
+      $('editPotonganKasbon').value = formatMoney(record.potonganKasbon || 0);
+      $('editKasbonKantor').value   = formatMoney(record.kasbonKantor || 0);
+      $('editKasbonLama').value     = formatMoney(record.kasbonLama || 0);
+      $('editKerajinanBonus').value = record.hasKerajinanBonus ? 'true' : 'false';
+
+      const m = record.metrics || {};
+      let html = '';
+
+      const wrap = (label, inner) => `
+        <div>
+          <label class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-warn">${label}</label>
+          ${inner}
+        </div>`;
+
+      const numberInput = (id, value) =>
+        `<input type="number" id="${id}" value="${value}" min="0" class="field font-mono" />`;
+      const moneyInput = (id, value) =>
+        `<input type="text" id="${id}" value="${formatMoney(value)}" inputmode="numeric" class="field money-input font-mono" />`;
+
+      switch (record.workerType) {
+        case 'Admin GPS':
+          html = wrap('GPS Units Sold', numberInput('editUnitCount', m.unitCount || 0));
+          break;
+        case 'Sales HPZ':
+          html = wrap('3-Month Sales Amount (IDR)', moneyInput('editSales3Months', m.sales3Months || 0));
+          break;
+        case 'Mekanik HPZ':
+          html = wrap('Monthly Installation Sales (IDR)', moneyInput('editInstalasiHpzAmount', m.instalasiHpzAmount || 0));
+          break;
+        case 'Mekanik GPS':
+        case 'Helper':
+          html = `<div class="grid grid-cols-2 gap-4">
+                    ${wrap('Pasang GPS Units', numberInput('editPasangGpsUnits', m.pasangGpsUnits || 0))}
+                    ${wrap('Cek GPS Units', numberInput('editCekGpsUnits', m.cekGpsUnits || 0))}
+                  </div>`;
+          break;
+        case 'Mekanik CCTV':
+          html = `<div class="grid grid-cols-2 gap-4">
+                    ${wrap('Pasang CCTV Units', numberInput('editPasangCctvUnits', m.pasangCctvUnits || 0))}
+                    ${wrap('Servis CCTV Units', numberInput('editServisCctvUnits', m.servisCctvUnits || 0))}
+                  </div>`;
+          break;
+      }
+
+      editMetrics.innerHTML = html;
+    }
+
+    /* ---------- save ---------- */
+    editForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!data?.id) {
+        toast('Missing record identifier — cannot save.', 'error');
+        return;
+      }
+
+      const newWorkerName     = $('editWorkerName').value.trim();
+      const newWorkerCategory = $('editWorkerCategory').value;
+      const newRecordMonth    = $('editRecordMonth').value;
+
+      if (!newWorkerName) {
+        toast('Worker name cannot be empty.', 'error');
+        $('editWorkerName').focus();
+        return;
+      }
+      if (!newWorkerCategory) {
+        toast('Please select a category.', 'error');
+        $('editWorkerCategory').focus();
+        return;
+      }
+      if (!newRecordMonth) {
+        toast('Please select a payroll month.', 'error');
+        $('editRecordMonth').focus();
+        return;
+      }
+
+      const newGajiPokok    = parseMoney($('editGajiPokok').value);
+      const newUangMakan    = parseMoney($('editUangMakan').value);
+      const newInsentif     = parseMoney($('editInsentif').value);
+      const rawPotongan     = parseMoney($('editPotonganKasbon').value);
+      const newKasbonKantor = parseMoney($('editKasbonKantor').value);
+      const newKasbonLama   = parseMoney($('editKasbonLama').value);
+      const newKerajinan    = $('editKerajinanBonus').value === 'true';
+
+      const newPotongan = newKasbonLama > 0 ? Math.min(rawPotongan, newKasbonLama) : 0;
+
+      const newMetrics = { ...(data.metrics || {}) };
+      switch (newWorkerCategory) {
+        case 'Admin GPS':
+          newMetrics.unitCount = Number($('editUnitCount')?.value || 0);
+          break;
+        case 'Sales HPZ':
+          newMetrics.sales3Months = parseMoney($('editSales3Months')?.value);
+          break;
+        case 'Mekanik HPZ':
+          newMetrics.instalasiHpzAmount = parseMoney($('editInstalasiHpzAmount')?.value);
+          break;
+        case 'Mekanik GPS':
+        case 'Helper':
+          newMetrics.pasangGpsUnits = Number($('editPasangGpsUnits')?.value || 0);
+          newMetrics.cekGpsUnits    = Number($('editCekGpsUnits')?.value || 0);
+          if (newWorkerCategory === 'Helper') newMetrics.cleaningServiceAllowance = CLEANING_ALLOWANCE;
+          break;
+        case 'Mekanik CCTV':
+          newMetrics.pasangCctvUnits = Number($('editPasangCctvUnits')?.value || 0);
+          newMetrics.servisCctvUnits = Number($('editServisCctvUnits')?.value || 0);
+          break;
+      }
+
+      /* capture the OLD identity before we overwrite `data` */
+      const oldName  = data.workerName;
+      const oldCat   = data.workerType;
+      const oldMonth = data.recordMonth;
+
+      const submitBtn = editForm.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+
+      try {
+        /* 1 · current payroll record */
+        await updateDoc(doc(db, 'payroll_records', data.id), {
+          workerName:        newWorkerName,
+          workerType:        newWorkerCategory,
+          recordMonth:       newRecordMonth,
+          hasKerajinanBonus: newKerajinan,
+          kasbonKantor:      newKasbonKantor,
+          potonganKasbon:    newPotongan,
+          kasbonLama:        newKasbonLama,
+          metrics:           newMetrics
+        });
+
+        /* 2 · roster — rename / move category (affects FUTURE payslips) */
+        if (oldName !== newWorkerName || oldCat !== newWorkerCategory) {
+          await migrateRosterIdentity(oldName, oldCat, newWorkerName, newWorkerCategory);
+        }
+
+        /* 3 · wage config — write new doc, then remove the stale one */
+        await setDoc(doc(db, 'default_wages', newWorkerName), {
+          workerName:       newWorkerName,
+          defaultGajiPokok: newGajiPokok,
+          uangMakan:        newUangMakan,
+          insentif:         newInsentif,
+          kasbonLama:       newKasbonLama,
+          potonganKasbon:   newPotongan,
+          kasbonKantor:     newKasbonKantor
+        }, { merge: true });
+
+        if (oldName !== newWorkerName) {
+          await deleteStaleWageDoc(oldName, newWorkerName);
+        }
+
+        /* 4 · local state + view */
+        data = {
+          ...data,
+          workerName:        newWorkerName,
+          workerType:        newWorkerCategory,
+          recordMonth:       newRecordMonth,
+          defaultGajiPokok:  newGajiPokok,
+          uangMakan:         newUangMakan,
+          insentif:          newInsentif,
+          kasbonLama:        newKasbonLama,
+          potonganKasbon:    newPotongan,
+          kasbonKantor:      newKasbonKantor,
+          hasKerajinanBonus: newKerajinan,
+          metrics:           newMetrics
+        };
+        data.sisaKasbon = Math.max(0, newKasbonLama - newPotongan);
+
+        localStorage.setItem('selectedWorker', JSON.stringify(data));
+        renderPayslipView(data);
+
+        /* 5 · feedback */
+        const changes = [];
+        if (oldName  !== newWorkerName)     changes.push(`renamed to "${newWorkerName}"`);
+        if (oldCat   !== newWorkerCategory) changes.push(`moved to ${newWorkerCategory}`);
+        if (oldMonth !== newRecordMonth)    changes.push(`period → ${newRecordMonth}`);
+
+        const suffix = changes.length ? ` — ${changes.join(', ')}` : '';
+        toast(`Payslip updated${suffix}. Future submissions will use the new details.`, 'success', 5000);
+
+        closeModal();
+
+      } catch (err) {
+        console.error('Update failed:', err);
+        toast('Could not save changes to the database.', 'error');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>      background-color: #f8fafc !important;
       border: 1px solid #e2e8f0 !important;
     }
     .pdf-mode .pdf-header-bar {
