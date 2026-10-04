@@ -39,6 +39,22 @@ const RATES = {
   salesCommission: 0.01
 };
 
+/* ──────────────────────────────────────────────────────────────────────────
+   Lombok workers
+   ---------------------------------------------------------------------------
+   A restricted subset of the roster. They never appear in admin (Ayu /
+   Christy) category dropdowns and their records are always submitted with
+   `hasKerajinanBonus: false`. Only Mr. Thusen can file data for them.
+   ────────────────────────────────────────────────────────────────────────── */
+const LOMBOK_WORKERS = [
+  { name: "Efendi Zulsilhamdi",         category: "Mekanik HPZ" },
+  { name: "Afrilia Indriyani",           category: "Admin HPZ"   },
+  { name: "Iwan Pratama",                category: "Sales HPZ"   },
+  { name: "Ni Kadek Dwina Suryani Dewi", category: "Admin HPZ"   }
+];
+const LOMBOK_NAMES   = new Set(LOMBOK_WORKERS.map((w) => w.name));
+const LOMBOK_BY_NAME = new Map(LOMBOK_WORKERS.map((w) => [w.name, w.category]));
+
 const DEFAULT_ROSTER = {
   "Admin GPS":   ["Mei Dhea Cahya Ardika", "Ni Wayan Widiantari", "Tri Maharani"],
   "Finance GPS": ["Wahyuningsih"],
@@ -104,7 +120,6 @@ function applyTheme(theme) {
   $('themeIconMoon')?.classList.toggle('hidden', light);
 }
 
-/* Sync with the class the inline bootstrap script already applied */
 applyTheme(document.documentElement.classList.contains('light') ? 'light' : 'dark');
 
 $('themeToggleBtn')?.addEventListener('click', () => {
@@ -140,9 +155,24 @@ function fillCategorySelect(select, { includeAll = false, allLabel = 'All Catego
 
 fillCategorySelect($('workerType'));
 fillCategorySelect($('settingCategorySelect'), { includeAll: true });
-fillCategorySelect($('tableCategoryFilter'),  { includeAll: true });
 fillCategorySelect($('newWorkerCategory'));
 fillCategorySelect($('rosterCategoryFilter'), { includeAll: true });
+
+/* Table filter: add a Lombok-only option after the categories */
+(function addLombokTableFilter() {
+  const sel = $('tableCategoryFilter');
+  if (!sel) return;
+  sel.replaceChildren();
+  sel.appendChild(new Option('All Categories', 'ALL', false, true));
+  CATEGORIES.forEach((c) => sel.appendChild(new Option(c, c)));
+
+  /* Group visually with a divider option */
+  const sep = new Option('──────────', 'SEP');
+  sep.disabled = true;
+  sel.appendChild(sep);
+
+  sel.appendChild(new Option('★ Lombok Workers (Owner only)', 'LOMBOK'));
+})();
 
 /* -------------------------------------------------------- session & routing */
 const params = new URLSearchParams(window.location.search);
@@ -162,27 +192,93 @@ $('exitSessionBtn').addEventListener('click', () => {
 (function applyRolePermissions() {
   $('ownerSection').classList.toggle('hidden', !state.isOwner);
   $('gajiPokokSettingsSection').classList.toggle('hidden', !state.isOwner);
+  $('lombokFormSection').classList.toggle('hidden', !state.isOwner);
   $('adminFormSection').classList.toggle('hidden', state.isOwner);
 })();
+
+/* ==========================================================================
+   Filter & section-state persistence
+   --------------------------------------------------------------------------
+   Remembers the Financial Overview filters (period, category, search) and
+   the collapse state of the table / filter panel across navigations within
+   the same browser tab. Opening a payslip and returning lands you on the
+   exact same table view.
+   ========================================================================== */
+const FILTER_STATE_KEY = 'payrollFilters';
+
+function readFilterState() {
+  try {
+    const raw = sessionStorage.getItem(FILTER_STATE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function writeFilterState() {
+  const period   = $('tablePeriodFilter');
+  const category = $('tableCategoryFilter');
+  const search   = $('tableSearchInput');
+  const table    = $('tableContent');
+  const filters  = $('filterToolbar');
+  if (!period || !category || !search || !table || !filters) return;
+
+  try {
+    sessionStorage.setItem(FILTER_STATE_KEY, JSON.stringify({
+      period:          period.value,
+      category:        category.value,
+      search:          search.value,
+      tableCollapsed:  table.classList.contains('is-collapsed'),
+      filterCollapsed: filters.classList.contains('is-collapsed')
+    }));
+  } catch (_) { /* quota */ }
+}
+
+/**
+ * Apply any saved state (filter values + collapse flags).
+ * Collapse flags MUST be applied to the panel classes BEFORE
+ * bindCollapsible runs so the toggles pick up the right initial state.
+ */
+function applySavedFilterState() {
+  const saved = readFilterState();
+  if (!saved) return;
+
+  const period   = $('tablePeriodFilter');
+  const category = $('tableCategoryFilter');
+  const search   = $('tableSearchInput');
+  const table    = $('tableContent');
+  const filters  = $('filterToolbar');
+
+  if (period   && typeof saved.period === 'string')   period.value   = saved.period;
+  if (category && typeof saved.category === 'string') category.value = saved.category;
+  if (search   && typeof saved.search === 'string')   search.value   = saved.search;
+
+  if (table)   table.classList.toggle('is-collapsed',   !!saved.tableCollapsed);
+  if (filters) filters.classList.toggle('is-collapsed', !!saved.filterCollapsed);
+}
+
+/* Run once before anything reads the panel state */
+applySavedFilterState();
 
 /* -------------------------------------------------------- default month */
 (function setDefaultMonth() {
   const now = new Date();
   const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const recordMonth = $('recordMonth');
+  const lombokMonth = $('lombokRecordMonth');
   const tablePeriod = $('tablePeriodFilter');
+
   if (recordMonth) recordMonth.value = ym;
-  if (tablePeriod) tablePeriod.value = ym;
+  if (lombokMonth) lombokMonth.value = ym;
+
+  /* Only default the table filter if the user hasn't already narrowed it */
+  if (tablePeriod && !tablePeriod.value) tablePeriod.value = ym;
 })();
 
 /* ==========================================================================
    Collapsible sections
-   --------------------------------------------------------------------------
-   Visibility is driven by JS (panel.style.display), not by CSS class alone.
-   This makes the toggle immune to stylesheet caching, specificity problems,
-   or a missing .collapsible rule.
    ========================================================================== */
-function bindCollapsible(triggers, panel, chevron, labelEl) {
+function bindCollapsible(triggers, panel, chevron, labelEl, onToggle) {
   if (!panel) { console.warn('[collapsible] panel not found'); return null; }
 
   const triggerList = triggers.filter(Boolean);
@@ -213,6 +309,7 @@ function bindCollapsible(triggers, panel, chevron, labelEl) {
   const toggle = () => {
     collapsed = !collapsed;
     render();
+    if (typeof onToggle === 'function') onToggle();
   };
 
   triggerList.forEach((el) => {
@@ -227,7 +324,6 @@ function bindCollapsible(triggers, panel, chevron, labelEl) {
   return { toggle, isCollapsed: () => collapsed };
 }
 
-/* ── 1 · Owner settings panel ─────────────────────────────────────────── */
 bindCollapsible(
   [$('toggleSettingsBtn')],
   $('settingsContent'),
@@ -235,15 +331,14 @@ bindCollapsible(
   $('settingsToggleLabel')
 );
 
-/* ── 2 · Financial overview table ─────────────────────────────────────── */
 const tableCtl = bindCollapsible(
   [$('toggleTableBtn'), $('toggleTableTitleArea')],
   $('tableContent'),
   $('tableChevron'),
-  $('tableToggleLabel')
+  $('tableToggleLabel'),
+  writeFilterState
 );
 
-/* ── 3 · Filter toolbar (auto-opens the table if it's collapsed) ──────── */
 const filterToolbar = $('filterToolbar');
 const filterChevron = $('filterChevron');
 
@@ -262,11 +357,10 @@ if (filterToolbar && $('toggleFilterBtn')) {
   $('toggleFilterBtn').addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-
     if (tableCtl && tableCtl.isCollapsed()) tableCtl.toggle();
-
     filterCollapsed = !filterCollapsed;
     renderFilter();
+    writeFilterState();
   });
 
   renderFilter();
@@ -284,6 +378,15 @@ const kasbonKantorInput = $('kasbonKantorInput');
 const field = (id, label, { type = 'number', value = '0', money = false, min = '0' } = {}) => `
   <div>
     <label for="${id}" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-brand">${label}</label>
+    <input type="${type}" id="${id}" value="${value}" ${type === 'number' ? `min="${min}"` : ''}
+           inputmode="${money ? 'numeric' : 'decimal'}"
+           class="field ${money ? 'money-input' : ''} font-mono" />
+  </div>`;
+
+/* Lombok variant — amber labels to visually differentiate */
+const lombokField = (id, label, { type = 'number', value = '0', money = false, min = '0' } = {}) => `
+  <div>
+    <label for="${id}" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-warn">${label}</label>
     <input type="${type}" id="${id}" value="${value}" ${type === 'number' ? `min="${min}"` : ''}
            inputmode="${money ? 'numeric' : 'decimal'}"
            class="field ${money ? 'money-input' : ''} font-mono" />
@@ -329,11 +432,57 @@ function renderDynamicInputs() {
   dynamicInputs.innerHTML = html;
 }
 
+/* ---------- Lombok dynamic inputs (prefixed IDs) ---------- */
+function renderLombokDynamicInputs() {
+  const workerName = $('lombokWorker').value;
+  const category   = LOMBOK_BY_NAME.get(workerName) || '';
+
+  $('lombokCategoryDisplay').textContent = category || '—';
+
+  let html = '';
+  const f = (id, label, opts) => lombokField(`lombok_${id}`, label, opts);
+
+  switch (category) {
+    case 'Admin GPS':
+      html = `<div class="md:col-span-2">${f('unitCount', 'Jumlah Penjualan Unit GPS')}</div>`;
+      break;
+
+    case 'Sales HPZ':
+      html = `<div class="md:col-span-2">${f('sales3Months', 'Total Penjualan 3 Bulan Terakhir (IDR)', { type: 'text', money: true })}</div>`;
+      break;
+
+    case 'Mekanik HPZ':
+      html = `<div class="md:col-span-2">${f('instalasiHpzAmount', 'Total Penjualan Instalasi HPZ Bulan Ini (IDR)', { type: 'text', money: true })}</div>`;
+      break;
+
+    case 'Mekanik GPS':
+    case 'Helper':
+      html = f('pasangGpsUnits', 'Jumlah Pasang GPS')
+           + f('cekGpsUnits', 'Jumlah Cek Unit GPS');
+      break;
+
+    case 'Mekanik CCTV':
+      html = f('pasangCctvUnits', 'Jumlah Pasang CCTV')
+           + f('servisCctvUnits', 'Jumlah Servis CCTV');
+      break;
+
+    default:
+      html = `<p class="md:col-span-2 text-xs italic text-muted">
+                Select a Lombok worker to load their performance fields.
+              </p>`;
+  }
+
+  $('lombokDynamicInputs').innerHTML = html;
+}
+
 /* ==========================================================================
    Worker option lists
    ========================================================================== */
 function updateWorkerOptions() {
-  const workers = state.roster[workerTypeSelect.value] || [];
+  /* Exclude Lombok workers from the admin-facing list. */
+  const workers = (state.roster[workerTypeSelect.value] || [])
+    .filter((name) => !LOMBOK_NAMES.has(name));
+
   workerSelect.replaceChildren(new Option('Select Worker', '', true, true));
   workerSelect.firstElementChild.disabled = true;
   workers.forEach((name) => workerSelect.appendChild(new Option(name, name)));
@@ -349,6 +498,19 @@ function updateSettingsWorkerDropdown() {
   sel.replaceChildren(new Option('Select Worker', '', true, true));
   sel.firstElementChild.disabled = true;
   list.forEach((name) => sel.appendChild(new Option(name, name)));
+}
+
+/* ==========================================================================
+   Lombok worker dropdown
+   ========================================================================== */
+function populateLombokWorkerDropdown() {
+  const sel = $('lombokWorker');
+  if (!sel) return;
+  sel.replaceChildren(new Option('Select Lombok Worker', '', true, true));
+  sel.firstElementChild.disabled = true;
+  LOMBOK_WORKERS.forEach((w) => {
+    sel.appendChild(new Option(`${w.name} — ${w.category}`, w.name));
+  });
 }
 
 /* ==========================================================================
@@ -407,11 +569,18 @@ function resolveLoan(record, settings) {
   };
 }
 
+/* Lombok workers never receive a punctuality bonus — enforced here as a
+   safety net so historical/imported records can't slip through. */
+function isKerajinanEligible(record) {
+  if (LOMBOK_NAMES.has(record.workerName)) return false;
+  return !!record.hasKerajinanBonus;
+}
+
 function calculateTotalWage(record, settings = {}) {
   const base     = settings.defaultGajiPokok || 0;
   const meal     = settings.uangMakan || 0;
   const insentif = settings.insentif || 0;
-  const bonusKerajinan = record.hasKerajinanBonus ? BONUS_KERAJINAN : 0;
+  const bonusKerajinan = isKerajinanEligible(record) ? BONUS_KERAJINAN : 0;
 
   const { potonganKasbon, kasbonKantor } = resolveLoan(record, settings);
   const deductions = potonganKasbon + kasbonKantor;
@@ -449,7 +618,7 @@ function calculateTotalWage(record, settings = {}) {
 }
 
 /* ==========================================================================
-   Submit — payroll record
+   Submit — payroll record (admin form)
    ========================================================================== */
 const payrollForm = $('payrollForm');
 
@@ -462,6 +631,12 @@ payrollForm.addEventListener('submit', async (e) => {
 
   if (!workerName || !category || !month) {
     toast('Please select a worker and payroll month.', 'error');
+    return;
+  }
+
+  /* Hard guard: Lombok workers are owner-only. */
+  if (LOMBOK_NAMES.has(workerName)) {
+    toast('That worker is Lombok-only and cannot be filed from this form.', 'error');
     return;
   }
 
@@ -519,6 +694,7 @@ payrollForm.addEventListener('submit', async (e) => {
       hasKerajinanBonus: category === 'Sales HPZ'
         ? false
         : $('hasKerajinanBonus').value === 'true',
+      isLombok: false,
       kasbonKantor: parseMoney(kasbonKantorInput.value),
       potonganKasbon: potongan,
       kasbonLama,
@@ -540,6 +716,109 @@ payrollForm.addEventListener('submit', async (e) => {
 
   } catch (err) {
     console.error('Failed to save payroll record:', err);
+    toast('Could not save the record. Please try again.', 'error');
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
+
+/* ==========================================================================
+   Submit — Lombok payroll record (owner only)
+   ========================================================================== */
+const lombokForm = $('lombokForm');
+
+lombokForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  if (!state.isOwner) {
+    toast('Only the owner can file Lombok records.', 'error');
+    return;
+  }
+
+  const workerName = $('lombokWorker').value;
+  const category   = LOMBOK_BY_NAME.get(workerName);
+  const month      = $('lombokRecordMonth').value;
+
+  if (!workerName || !category || !month) {
+    toast('Please select a Lombok worker and payroll month.', 'error');
+    return;
+  }
+
+  const submitBtn = $('lombokSubmitBtn');
+  submitBtn.disabled = true;
+
+  try {
+    const dupSnap = await getDocs(query(
+      collection(db, 'payroll_records'),
+      where('workerName', '==', workerName),
+      where('recordMonth', '==', month)
+    ));
+
+    if (!dupSnap.empty) {
+      const label = new Date(`${month}-01`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      toast(`A record for "${workerName}" already exists for ${label}.`, 'error', 5000);
+      return;
+    }
+
+    const metrics = {};
+    switch (category) {
+      case 'Admin GPS':
+        metrics.unitCount = Number($('lombok_unitCount')?.value || 0);
+        break;
+      case 'Sales HPZ':
+        metrics.sales3Months = parseMoney($('lombok_sales3Months')?.value);
+        break;
+      case 'Mekanik HPZ':
+        metrics.instalasiHpzAmount = parseMoney($('lombok_instalasiHpzAmount')?.value);
+        break;
+      case 'Mekanik GPS':
+        metrics.pasangGpsUnits = Number($('lombok_pasangGpsUnits')?.value || 0);
+        metrics.cekGpsUnits    = Number($('lombok_cekGpsUnits')?.value || 0);
+        break;
+      case 'Mekanik CCTV':
+        metrics.pasangCctvUnits = Number($('lombok_pasangCctvUnits')?.value || 0);
+        metrics.servisCctvUnits = Number($('lombok_servisCctvUnits')?.value || 0);
+        break;
+      case 'Helper':
+        metrics.pasangGpsUnits = Number($('lombok_pasangGpsUnits')?.value || 0);
+        metrics.cekGpsUnits    = Number($('lombok_cekGpsUnits')?.value || 0);
+        metrics.cleaningServiceAllowance = CLEANING_ALLOWANCE;
+        break;
+    }
+
+    const cfg        = state.wages[workerName] || {};
+    const kasbonLama = cfg.kasbonLama || 0;
+    const setting    = cfg.potonganKasbon || 0;
+    const potongan   = kasbonLama > 0 && setting > 0 ? Math.min(setting, kasbonLama) : 0;
+
+    await addDoc(collection(db, 'payroll_records'), {
+      workerName,
+      workerType: category,
+      recordMonth: month,
+      hasKerajinanBonus: false,   // Lombok — no punctuality bonus, ever
+      isLombok: true,
+      kasbonKantor: parseMoney($('lombokKasbonKantorInput').value),
+      potonganKasbon: potongan,
+      kasbonLama,
+      metrics,
+      submittedBy: state.user || 'Admin',
+      timestamp: serverTimestamp()
+    });
+
+    toast(`Lombok record for ${workerName} submitted successfully.`, 'success');
+
+    /* Reset form, keep month */
+    lombokForm.reset();
+    $('lombokRecordMonth').value = month;
+    $('lombokKasbonKantorInput').value = '0';
+    $('lombokCategoryDisplay').textContent = '—';
+    $('lombokDynamicInputs').innerHTML = `
+      <p class="md:col-span-2 text-xs italic text-muted">
+        Select a Lombok worker to load their performance fields.
+      </p>`;
+
+  } catch (err) {
+    console.error('Failed to save Lombok record:', err);
     toast('Could not save the record. Please try again.', 'error');
   } finally {
     submitBtn.disabled = false;
@@ -587,30 +866,14 @@ $('gajiPokokForm').addEventListener('submit', async (e) => {
    ========================================================================== */
 onSnapshot(collection(db, 'worker_roster'), (snap) => {
   const merged = structuredClone(DEFAULT_ROSTER);
-  snap.forEach((d) => {
-    const { category, workers } = d.data();
-    if (category && Array.isArray(workers)) merged[category] = workers;
-  });onSnapshot(collection(db, 'worker_roster'), (snap) => {
-  const merged = structuredClone(DEFAULT_ROSTER);
 
   snap.forEach((d) => {
     const { category, workers } = d.data();
-
-    /* Self-heal: an empty array means the category was wiped (or has never
-       been persisted). Fall back to the shipped defaults instead of
-       overwriting them with nothing. */
     if (category && Array.isArray(workers) && workers.length > 0) {
       merged[category] = workers;
     }
   });
 
-  state.roster = merged;
-  try { localStorage.setItem('payrollRoster', JSON.stringify(merged)); } catch (_) { /* quota */ }
-
-  updateWorkerOptions();
-  updateSettingsWorkerDropdown();
-  renderRosterList();
-}, (err) => console.error('roster listener:', err));
   state.roster = merged;
   try { localStorage.setItem('payrollRoster', JSON.stringify(merged)); } catch (_) { /* quota */ }
 
@@ -636,6 +899,9 @@ onSnapshot(collection(db, 'default_wages'), (snap) => {
 
   if (workerSelect.value && map[workerSelect.value]) {
     kasbonKantorInput.value = formatMoney(map[workerSelect.value].kasbonKantor);
+  }
+  if ($('lombokWorker').value && map[$('lombokWorker').value]) {
+    $('lombokKasbonKantorInput').value = formatMoney(map[$('lombokWorker').value].kasbonKantor);
   }
   scheduleRender();
 }, (err) => console.error('wages listener:', err));
@@ -690,15 +956,30 @@ function renderPayrollTable() {
   const search = tableSearchInput.value.trim().toLowerCase();
   const period = tablePeriodFilter.value;
 
-  const filtered = state.records.filter((r) =>
-    (cat === 'ALL' || r.workerType === cat) &&
-    (!period || r.recordMonth === period) &&
-    (!search || (r.workerName || '').toLowerCase().includes(search))
-  );
+  const filtered = state.records.filter((r) => {
+    const isLombok = LOMBOK_NAMES.has(r.workerName);
 
-  $('summarySubtext').textContent = period
-    ? `Total net payroll commitment for ${monthLabel(period)}.`
-    : 'Total net payroll commitment across all recorded periods.';
+    let catMatch = true;
+    if (cat === 'LOMBOK') {
+      catMatch = isLombok;
+    } else if (cat !== 'ALL' && cat !== 'SEP') {
+      catMatch = r.workerType === cat;
+    }
+
+    return catMatch &&
+      (!period || r.recordMonth === period) &&
+      (!search || (r.workerName || '').toLowerCase().includes(search));
+  });
+
+  if (cat === 'LOMBOK') {
+    $('summarySubtext').textContent = period
+      ? `Lombok-only commitment for ${monthLabel(period)}.`
+      : 'Total Lombok payroll commitment across all recorded periods.';
+  } else {
+    $('summarySubtext').textContent = period
+      ? `Total net payroll commitment for ${monthLabel(period)}.`
+      : 'Total net payroll commitment across all recorded periods.';
+  }
 
   if (filtered.length === 0) {
     payrollTableBody.innerHTML =
@@ -733,9 +1014,17 @@ function renderPayrollTable() {
       const totalWage = calculateTotalWage(record, settings);
       grandTotal += totalWage;
 
-      const kerajinanBadge = record.hasKerajinanBonus
+      const isLombokRec = LOMBOK_NAMES.has(record.workerName);
+
+      const kerajinanBadge = isKerajinanEligible(record)
         ? `<span class="rounded-full border border-success/40 bg-success/10 px-2.5 py-0.5 text-[10px] font-semibold text-success">Yes</span>`
         : `<span class="rounded-full border border-danger/40 bg-danger/10 px-2.5 py-0.5 text-[10px] font-semibold text-danger">No</span>`;
+
+      const lombokBadge = isLombokRec
+        ? `<span class="ml-2 inline-block align-middle rounded border border-warn/50 bg-warn/15 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-warn">
+             Lombok
+           </span>`
+        : '';
 
       const actionCell = state.isOwner
         ? `<td class="p-4 text-center">
@@ -755,9 +1044,11 @@ function renderPayrollTable() {
 
       const row = document.createElement('tr');
       row.dataset.recordId = record.id;
-      row.className = 'group cursor-pointer border-b border-line/40 transition-colors hover:bg-brand/5 active:bg-brand/10';
+      row.className = `group cursor-pointer border-b border-line/40 transition-colors hover:bg-brand/5 active:bg-brand/10${isLombokRec ? ' bg-warn/[0.03]' : ''}`;
       row.innerHTML = `
-        <td class="p-4 font-medium text-fg transition-colors group-hover:text-brand">${record.workerName}</td>
+        <td class="p-4 font-medium text-fg transition-colors group-hover:text-brand">
+          ${record.workerName}${lombokBadge}
+        </td>
         <td class="p-4">
           <span class="rounded-lg border border-line bg-panel/70 px-2.5 py-1 text-[10px] font-semibold text-fg-soft">
             ${record.workerType}
@@ -826,8 +1117,13 @@ function openPayslip(record) {
     ...record,
     ...settings,
     ...loan,
+    isLombok: LOMBOK_NAMES.has(record.workerName),
     totalWage: calculateTotalWage(record, settings)
   };
+
+  /* Persist the current filter/section state so the dashboard can restore it
+     when the user returns from the payslip. */
+  writeFilterState();
 
   try {
     localStorage.setItem('selectedWorker', JSON.stringify(payload));
@@ -853,12 +1149,19 @@ async function deletePayrollRecord(recordId, workerName, periodFormatted) {
 }
 
 /* ---------- filters ---------- */
-on(tablePeriodFilter, 'change', renderPayrollTable);
-on(tableCategoryFilter, 'change', renderPayrollTable);
-on(tableSearchInput, 'input', debounce(renderPayrollTable, 180));
+/* Persist the current filter values + section state, then re-render */
+function persistAndRender() {
+  writeFilterState();
+  renderPayrollTable();
+}
+const persistAndRenderDebounced = debounce(persistAndRender, 180);
+
+on(tablePeriodFilter, 'change', persistAndRender);
+on(tableCategoryFilter, 'change', persistAndRender);
+on(tableSearchInput, 'input', persistAndRenderDebounced);
 on($('clearPeriodFilterBtn'), 'click', () => {
   tablePeriodFilter.value = '';
-  renderPayrollTable();
+  persistAndRender();
 });
 
 /* ==========================================================================
@@ -895,12 +1198,16 @@ function renderRosterList() {
 
     workers.forEach((name) => {
       count++;
+      const isLombok = LOMBOK_NAMES.has(name);
       const item = document.createElement('div');
       item.className = 'flex items-center justify-between rounded-lg px-2 py-2 transition-colors hover:bg-panel/70';
       item.innerHTML = `
         <div class="flex min-w-0 items-center gap-2">
           <span class="truncate text-xs font-semibold text-fg">${name}</span>
           <span class="shrink-0 rounded-md bg-panel px-2 py-0.5 font-mono text-[9px] text-muted">${cat}</span>
+          ${isLombok
+            ? `<span class="shrink-0 rounded border border-warn/50 bg-warn/15 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-warn">Lombok</span>`
+            : ''}
         </div>
         <button type="button"
                 class="remove-worker-btn shrink-0 rounded-lg p-1 text-danger transition-all hover:bg-danger/15"
@@ -966,6 +1273,10 @@ $('addWorkerForm').addEventListener('submit', async (e) => {
 });
 
 async function removeWorkerFromRoster(cat, name) {
+  if (LOMBOK_NAMES.has(name)) {
+    toast(`"${name}" is a Lombok worker and cannot be removed from the roster.`, 'error', 4500);
+    return;
+  }
   if (!confirm(`Remove "${name}" from the ${cat} roster?`)) return;
   state.roster[cat] = (state.roster[cat] || []).filter((w) => w !== name);
   await persistRosterCategory(cat);
@@ -987,6 +1298,10 @@ async function removeWorkerFromRoster(cat, name) {
   updateSettingsWorkerDropdown();
   renderDynamicInputs();
 
+  /* Lombok dropdown + first render */
+  populateLombokWorkerDropdown();
+  renderLombokDynamicInputs();
+
   try {
     const cached = JSON.parse(localStorage.getItem('payrollRoster'));
     if (cached && typeof cached === 'object') {
@@ -1004,5 +1319,12 @@ async function removeWorkerFromRoster(cat, name) {
   workerSelect.addEventListener('change', () => {
     const cfg = state.wages[workerSelect.value];
     kasbonKantorInput.value = formatMoney(cfg?.kasbonKantor || 0);
+  });
+
+  /* Lombok form interactions */
+  $('lombokWorker').addEventListener('change', () => {
+    renderLombokDynamicInputs();
+    const cfg = state.wages[$('lombokWorker').value];
+    $('lombokKasbonKantorInput').value = formatMoney(cfg?.kasbonKantor || 0);
   });
 })();

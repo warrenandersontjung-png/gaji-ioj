@@ -324,7 +324,6 @@
 
   <div class="relative z-10 w-full max-w-2xl space-y-4">
 
-    <!-- ═══════════ ACTION BAR ═══════════ -->
     <div class="no-print flex flex-wrap items-center justify-between gap-3">
       <a id="returnBtn" href="payroll.html"
          class="group inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand transition-opacity hover:opacity-80">
@@ -365,7 +364,6 @@
       </div>
     </div>
 
-    <!-- ═══════════ PAYSLIP PREVIEW ═══════════ -->
     <div id="payslipContent"
          class="payslip-card glass space-y-6 rounded-2xl border border-line p-6 shadow-2xl sm:p-8">
 
@@ -461,7 +459,6 @@
     </div>
   </div>
 
-  <!-- ═══════════ PDF STAGE ═══════════ -->
   <div id="pdfStage" aria-hidden="true">
     <div id="pdfTemplate">
       <table class="meta">
@@ -520,7 +517,6 @@
     <span>Building Payslip…</span>
   </div>
 
-  <!-- ═══════════ EDIT MODAL ═══════════ -->
   <div id="editModal"
        class="no-print fixed inset-0 z-50 hidden items-center justify-center bg-base/80 p-4 backdrop-blur-md">
     <div class="glass max-h-[90vh] w-full max-w-lg space-y-5 overflow-y-auto rounded-2xl border border-warn/40 p-6 shadow-2xl">
@@ -540,7 +536,6 @@
 
       <form id="editForm" class="space-y-4" novalidate>
 
-        <!-- ─── RECORD IDENTITY ──────────────────────────────────── -->
         <div class="space-y-3 rounded-xl border border-warn/30 bg-warn/5 p-4">
           <div class="flex items-center justify-between">
             <span class="block text-[10px] font-bold uppercase tracking-wider text-warn">
@@ -577,7 +572,6 @@
           </p>
         </div>
 
-        <!-- ─── WAGE COMPONENTS ──────────────────────────────────── -->
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label for="editGajiPokok" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-fg-soft">
@@ -622,7 +616,7 @@
           <span class="mt-1 block text-[10px] text-dim">Set to 0 to clear the loan from this payslip entirely.</span>
         </div>
 
-        <div>
+        <div id="editKerajinanWrap">
           <label for="editKerajinanBonus" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-fg-soft">
             Bonus Kerajinan
           </label>
@@ -684,26 +678,14 @@
       "Mekanik CCTV", "Helper"
     ];
 
-    /* Shipped roster — used as the fallback when Firestore has no roster for
-       a category, and as the seed that repairs a wiped category. Keep in
-       sync with script.js. */
-    const DEFAULT_ROSTER = {
-      "Admin GPS":   ["Mei Dhea Cahya Ardika", "Ni Wayan Widiantari", "Tri Maharani"],
-      "Finance GPS": ["Wahyuningsih"],
-      "Finance HPZ": ["Christy Martika"],
-      "Admin HPZ":   ["Ni Luh Ayu Atmi Kamaratih", "Widya Nurliza", "Ni Luh Febriyanti",
-                      "Aldina Verbiana", "Afrilia Indriyani", "Ni Kadek Dwina Suryani Dewi"],
-      "Team comm":   ["Tio Atrik Herdiansyah"],
-      "Sales HPZ":   ["Richard Antonius", "Iwan Pratama"],
-      "Gudang":      ["Pande Gede Ngurah Dana", "Ashera Devi Swarna Vista",
-                      "Nadia Ayu Riskiyah Putri", "Ganna Sine Kustury Vegat"],
-      "Driver":      ["Hersi Arnantyo", "Wiraganda Pattiwaellapia"],
-      "Mekanik HPZ": ["Rohmad Imam Safii", "Ahmad Ardy Firmansyah", "Candra Bayu Pratama",
-                      "Munhamir Amin Almadkur", "Efendi Zulsilhamdi"],
-      "Mekanik GPS": ["Heri Hermansah", "Hauzi Alwi"],
-      "Mekanik CCTV":["Jackson M Bessie", "Stefanus Rofinus R C"],
-      "Helper":      ["Yoyok Ujianto"]
-    };
+    /* Lombok workers — no punctuality bonus, owner-only entry.
+       Kept in sync with script.js. */
+    const LOMBOK_NAMES = new Set([
+      "Efendi Zulsilhamdi",
+      "Afrilia Indriyani",
+      "Iwan Pratama",
+      "Ni Kadek Dwina Suryani Dewi"
+    ]);
 
     function toast(message, type = 'info', ms = 3600) {
       const host = $('toastHost');
@@ -786,6 +768,15 @@
       };
     }
 
+    /* Lombok workers never get the punctuality bonus */
+    function isLombok(rec) {
+      return !!(rec?.isLombok || LOMBOK_NAMES.has(rec?.workerName));
+    }
+    function isKerajinanEligible(rec) {
+      if (isLombok(rec)) return false;
+      return !!rec.hasKerajinanBonus;
+    }
+
     function calculateTHP(rec, opts) {
       const {
         gajiPokok, uangMakan, insentif, potonganKasbon,
@@ -833,24 +824,25 @@
     function renderPayslipView(record) {
       if (!record) return;
 
+      const lombok = isLombok(record);
+      const isSales = record.workerType === 'Sales HPZ';
+
       $('workerNameDisplay').textContent = record.workerName || 'Employee';
       $('workerTypeDisplay').textContent = `Category: ${record.workerType || 'Standard'}`;
       $('periodDisplay').textContent = record.recordMonth
         ? new Date(`${record.recordMonth}-01`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
         : 'N/A';
 
-      const isSales = record.workerType === 'Sales HPZ';
-
+      /* Hide gaji pokok / kerajinan for sales-commission-only */
       $('gajiPokokRow').classList.toggle('hidden', isSales);
-      $('kerajinanRow').classList.toggle('hidden', isSales);
       $('gajiPokokRow').classList.toggle('flex', !isSales);
-      $('kerajinanRow').classList.toggle('flex', !isSales);
 
       if (!isSales) {
         $('gajiPokokDisplay').textContent = rupiah(record.defaultGajiPokok || 0);
       }
       $('uangMakanDisplay').textContent = rupiah(record.uangMakan || 0);
 
+      /* Insentif — hidden at 0, and hidden entirely for Sales */
       const insentifValue = Number(record.insentif) || 0;
       const insentifRow   = $('insentifRow');
       if (!isSales && insentifValue > 0) {
@@ -862,15 +854,23 @@
         insentifRow.classList.remove('flex');
       }
 
-      const badge = $('kerajinanBadge');
-      if (record.hasKerajinanBonus) {
-        badge.textContent = 'Eligible';
-        badge.className = 'rounded border border-success/40 bg-success/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-success';
-        $('kerajinanDisplay').textContent = `+${rupiah(BONUS_KERAJINAN)}`;
-      } else {
-        badge.textContent = 'Ineligible';
-        badge.className = 'rounded border border-danger/40 bg-danger/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-danger';
-        $('kerajinanDisplay').textContent = 'Rp 0';
+      /* Bonus Kerajinan — hidden for Sales AND for Lombok */
+      const kerajinanRow = $('kerajinanRow');
+      const kerajinanVisible = !isSales && !lombok;
+      kerajinanRow.classList.toggle('hidden', !kerajinanVisible);
+      kerajinanRow.classList.toggle('flex', kerajinanVisible);
+
+      if (kerajinanVisible) {
+        const badge = $('kerajinanBadge');
+        if (isKerajinanEligible(record)) {
+          badge.textContent = 'Eligible';
+          badge.className = 'rounded border border-success/40 bg-success/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-success';
+          $('kerajinanDisplay').textContent = `+${rupiah(BONUS_KERAJINAN)}`;
+        } else {
+          badge.textContent = 'Ineligible';
+          badge.className = 'rounded border border-danger/40 bg-danger/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-danger';
+          $('kerajinanDisplay').textContent = 'Rp 0';
+        }
       }
 
       const m = record.metrics || {};
@@ -971,7 +971,7 @@
         insentif:          insentifValue,
         potonganKasbon:    loan.potonganKasbon,
         kasbonKantor:      loan.kasbonKantor,
-        kerajinanEligible: !!record.hasKerajinanBonus,
+        kerajinanEligible: isKerajinanEligible(record),
         metrics:           m
       });
       $('totalWageDisplay').textContent = rupiah(net);
@@ -986,6 +986,7 @@
     function buildPdfContent(record) {
       const m       = record.metrics || {};
       const isSales = record.workerType === 'Sales HPZ';
+      const lombok  = isLombok(record);
       const loan    = resolveLoan(record);
       const insentifValue = Number(record.insentif) || 0;
 
@@ -994,9 +995,18 @@
         ? new Date(`${record.recordMonth}-01`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
         : '—';
 
-      $('pdfKerajinanStatus').textContent = isSales
-        ? 'N/A (commission based)'
-        : record.hasKerajinanBonus ? `Eligible (+${rupiah(BONUS_KERAJINAN)})` : 'Ineligible';
+      /* Punctuality status — 'N/A' for Sales, 'N/A' for Lombok, else Eligible/Ineligible */
+      let kerajinanStatus;
+      if (isSales) {
+        kerajinanStatus = 'N/A (commission based)';
+      } else if (lombok) {
+        kerajinanStatus = 'N/A (Lombok — no punctuality bonus)';
+      } else {
+        kerajinanStatus = isKerajinanEligible(record)
+          ? `Eligible (+${rupiah(BONUS_KERAJINAN)})`
+          : 'Ineligible';
+      }
+      $('pdfKerajinanStatus').textContent = kerajinanStatus;
 
       const issue = record.timestamp?.toDate
         ? record.timestamp.toDate()
@@ -1018,7 +1028,8 @@
         if (insentifValue > 0) {
           earnings.push(['Insentif (Incentive)', insentifValue]);
         }
-        if (record.hasKerajinanBonus) {
+        /* Kerajinan — omit for Lombok */
+        if (!lombok && isKerajinanEligible(record)) {
           earnings.push(['Bonus Kerajinan (Punctuality)', BONUS_KERAJINAN]);
         }
       }
@@ -1212,6 +1223,7 @@
     const editModal   = $('editModal');
     const editForm    = $('editForm');
     const editMetrics = $('editDynamicMetrics');
+    const kerajinanWrap = $('editKerajinanWrap');
 
     function openModal() {
       editModal.classList.remove('hidden');
@@ -1230,13 +1242,6 @@
     });
 
     /* ---------- roster helpers ---------- */
-
-    /**
-     * Read the persisted worker list for a category.
-     * Falls back to the shipped defaults when the Firestore document is
-     * missing OR empty. This is what stops a rename from accidentally
-     * wiping the category for every other admin.
-     */
     async function readRosterCategory(cat) {
       try {
         const snap = await getDoc(doc(db, 'worker_roster', cat));
@@ -1249,14 +1254,9 @@
       } catch (err) {
         console.warn('Could not read roster category:', cat, err);
       }
-      return (DEFAULT_ROSTER[cat] || []).slice();
+      return (DEFAULT_ROSTER_FALLBACK[cat] || []).slice();
     }
 
-    /**
-     * Apply a rename / category change to the Firestore roster.
-     * Uses readRosterCategory so we never overwrite a good list with an
-     * empty one, even if the category has never been persisted before.
-     */
     async function migrateRosterIdentity(oldName, oldCat, newName, newCat) {
       if (oldName === newName && oldCat === newCat) return;
 
@@ -1273,7 +1273,6 @@
           return;
         }
 
-        /* Category changed — pull the worker out of old … */
         const oldList = await readRosterCategory(oldCat);
         const cleaned = oldList.filter((w) => w !== oldName);
 
@@ -1282,7 +1281,6 @@
           workers:  cleaned
         });
 
-        /* … and push them into new */
         const newList = await readRosterCategory(newCat);
         const merged  = [...new Set([...newList, newName])].sort((a, b) => a.localeCompare(b));
 
@@ -1296,7 +1294,6 @@
       }
     }
 
-    /** Delete the wage document that was stored under the old name. */
     async function deleteStaleWageDoc(oldName, newName) {
       if (oldName === newName) return;
       try {
@@ -1305,6 +1302,24 @@
         console.warn('Could not delete old wage doc (may not exist):', err);
       }
     }
+
+    const DEFAULT_ROSTER_FALLBACK = {
+      "Admin GPS":   ["Mei Dhea Cahya Ardika", "Ni Wayan Widiantari", "Tri Maharani"],
+      "Finance GPS": ["Wahyuningsih"],
+      "Finance HPZ": ["Christy Martika"],
+      "Admin HPZ":   ["Ni Luh Ayu Atmi Kamaratih", "Widya Nurliza", "Ni Luh Febriyanti",
+                      "Aldina Verbiana", "Afrilia Indriyani", "Ni Kadek Dwina Suryani Dewi"],
+      "Team comm":   ["Tio Atrik Herdiansyah"],
+      "Sales HPZ":   ["Richard Antonius", "Iwan Pratama"],
+      "Gudang":      ["Pande Gede Ngurah Dana", "Ashera Devi Swarna Vista",
+                      "Nadia Ayu Riskiyah Putri", "Ganna Sine Kustury Vegat"],
+      "Driver":      ["Hersi Arnantyo", "Wiraganda Pattiwaellapia"],
+      "Mekanik HPZ": ["Rohmad Imam Safii", "Ahmad Ardy Firmansyah", "Candra Bayu Pratama",
+                      "Munhamir Amin Almadkur", "Efendi Zulsilhamdi"],
+      "Mekanik GPS": ["Heri Hermansah", "Hauzi Alwi"],
+      "Mekanik CCTV":["Jackson M Bessie", "Stefanus Rofinus R C"],
+      "Helper":      ["Yoyok Ujianto"]
+    };
 
     /* ---------- open modal ---------- */
     editBtn.addEventListener('click', async () => {
@@ -1347,6 +1362,10 @@
       $('editKasbonKantor').value   = formatMoney(record.kasbonKantor || 0);
       $('editKasbonLama').value     = formatMoney(record.kasbonLama || 0);
       $('editKerajinanBonus').value = record.hasKerajinanBonus ? 'true' : 'false';
+
+      /* Hide kerajinan editor for Lombok workers */
+      const isLombokRec = isLombok(record);
+      kerajinanWrap.classList.toggle('hidden', isLombokRec);
 
       const m = record.metrics || {};
       let html = '';
@@ -1425,7 +1444,10 @@
       const rawPotongan     = parseMoney($('editPotonganKasbon').value);
       const newKasbonKantor = parseMoney($('editKasbonKantor').value);
       const newKasbonLama   = parseMoney($('editKasbonLama').value);
-      const newKerajinan    = $('editKerajinanBonus').value === 'true';
+
+      /* Lombok workers: force kerajinan off, ignore the hidden select */
+      const lombokTarget = LOMBOK_NAMES.has(newWorkerName);
+      const newKerajinan = lombokTarget ? false : ($('editKerajinanBonus').value === 'true');
 
       const newPotongan = newKasbonLama > 0 ? Math.min(rawPotongan, newKasbonLama) : 0;
 
@@ -1452,7 +1474,6 @@
           break;
       }
 
-      /* capture the OLD identity before we overwrite `data` */
       const oldName  = data.workerName;
       const oldCat   = data.workerType;
       const oldMonth = data.recordMonth;
@@ -1461,7 +1482,6 @@
       submitBtn.disabled = true;
 
       try {
-        /* 1 · current payroll record */
         await updateDoc(doc(db, 'payroll_records', data.id), {
           workerName:        newWorkerName,
           workerType:        newWorkerCategory,
@@ -1473,12 +1493,10 @@
           metrics:           newMetrics
         });
 
-        /* 2 · roster — rename / move category (affects FUTURE payslips) */
         if (oldName !== newWorkerName || oldCat !== newWorkerCategory) {
           await migrateRosterIdentity(oldName, oldCat, newWorkerName, newWorkerCategory);
         }
 
-        /* 3 · wage config — write new doc, then remove the stale one */
         await setDoc(doc(db, 'default_wages', newWorkerName), {
           workerName:       newWorkerName,
           defaultGajiPokok: newGajiPokok,
@@ -1493,7 +1511,6 @@
           await deleteStaleWageDoc(oldName, newWorkerName);
         }
 
-        /* 4 · local state + view */
         data = {
           ...data,
           workerName:        newWorkerName,
@@ -1506,6 +1523,7 @@
           potonganKasbon:    newPotongan,
           kasbonKantor:      newKasbonKantor,
           hasKerajinanBonus: newKerajinan,
+          isLombok:          lombokTarget,
           metrics:           newMetrics
         };
         data.sisaKasbon = Math.max(0, newKasbonLama - newPotongan);
@@ -1513,14 +1531,13 @@
         localStorage.setItem('selectedWorker', JSON.stringify(data));
         renderPayslipView(data);
 
-        /* 5 · feedback */
         const changes = [];
         if (oldName  !== newWorkerName)     changes.push(`renamed to "${newWorkerName}"`);
         if (oldCat   !== newWorkerCategory) changes.push(`moved to ${newWorkerCategory}`);
         if (oldMonth !== newRecordMonth)    changes.push(`period → ${newRecordMonth}`);
 
         const suffix = changes.length ? ` — ${changes.join(', ')}` : '';
-        toast(`Payslip updated${suffix}. Future submissions will use the new details.`, 'success', 5000);
+        toast(`Payslip updated${suffix}.`, 'success', 5000);
 
         closeModal();
 
@@ -1531,594 +1548,6 @@
         submitBtn.disabled = false;
       }
     });
-  </script>
-</body>
-</html>      background-color: #f8fafc !important;
-      border: 1px solid #e2e8f0 !important;
-    }
-    .pdf-mode .pdf-header-bar {
-      border-bottom: 2px solid #0f172a !important;
-    }
-    .pdf-mode .pdf-total-box {
-      background: #f0fdf4 !important;
-      border: 2px solid #059669 !important;
-      color: #064e3b !important;
-    }
-
-    @media print {
-      body { background: #ffffff !important; color: #000000 !important; }
-      .no-print { display: none !important; }
-      .payslip-card { border: 1px solid #cbd5e1 !important; background: #ffffff !important; color: #0f172a !important; box-shadow: none !important; }
-      .text-white { color: #0f172a !important; }
-      .text-slate-400, .text-slate-300 { color: #475569 !important; }
-      .bg-slate-900\/60, .bg-slate-950\/80, .bg-slate-900\/40 { background-color: #f8fafc !important; }
-    }
-  </style>
-</head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans p-4 sm:p-8 antialiased flex flex-col items-center justify-center relative">
-
-  <!-- BACKGROUND DECORATION (HIDDEN ON PRINT) -->
-  <div class="fixed top-0 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none no-print"></div>
-
-  <div class="max-w-2xl w-full space-y-4 relative z-10">
-    
-    <!-- TOP NAVIGATION & ACTION BAR -->
-    <div class="flex items-center justify-between no-print">
-      <a id="returnBtn" href="payroll.html?user=Thusen" class="inline-flex items-center gap-2 text-xs text-indigo-400 hover:text-indigo-300 transition-all font-semibold uppercase tracking-wider group">
-        <svg class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-        Return to Dashboard
-      </a>
-
-      <div class="flex items-center gap-3">
-        <!-- EDIT BUTTON (ONLY VISIBLE TO MR. THUSEN) -->
-        <button type="button" id="editRecordBtn" class="hidden inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-amber-600/20 active:scale-95">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 012.828 0L19.5 5.5a2 2 0 010 2.828l-8.5 8.5H8v-2.5l8.586-8.586z"/></svg>
-          Edit Record
-        </button>
-
-        <button type="button" id="downloadPdfBtn" class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-emerald-600/20 active:scale-95">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          <span id="downloadBtnText">Download Payslip PDF</span>
-        </button>
-
-        <button type="button" id="themeToggleBtn" class="p-2 rounded-xl glass-card border border-slate-800 text-slate-300 hover:text-white transition-all text-xs">
-          <svg id="themeIconSun" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-          <svg id="themeIconMoon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- MAIN PAYSLIP CARD -->
-    <div id="payslipContent" class="payslip-card glass-card p-6 sm:p-8 rounded-2xl border border-slate-800 shadow-2xl space-y-6 bg-slate-900/90">
-      
-      <!-- FORMAL DOCUMENT HEADER -->
-      <div class="flex justify-between items-start border-b border-slate-800/80 pb-5 pdf-header-bar">
-        <div class="space-y-1">
-          <span class="text-[10px] font-black uppercase tracking-widest text-indigo-400 pdf-text-muted">PAYSLIP / SLIP GAJI</span>
-          <h1 id="workerNameDisplay" class="text-2xl font-extrabold tracking-tight text-white pdf-text-dark">Employee Name</h1>
-          <p id="workerTypeDisplay" class="text-xs text-slate-400 font-semibold pdf-text-muted">Role / Category</p>
-        </div>
-
-        <div class="text-right space-y-1">
-          <span class="text-[10px] uppercase font-extrabold text-slate-400 block tracking-wider pdf-text-muted">PAYROLL PERIOD</span>
-          <span id="periodDisplay" class="text-sm font-extrabold font-mono text-indigo-300 pdf-text-dark">Month Year</span>
-        </div>
-      </div>
-
-      <!-- PERFORMANCE METRICS SUMMARY BOX -->
-      <div id="metricsSummaryBox" class="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1 pdf-bg-light">
-        <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 pdf-text-muted">WORK METRICS / PERFORMANCE SUMMARY</span>
-        <div id="metricsText" class="text-xs font-semibold text-white font-mono pdf-text-dark">-</div>
-      </div>
-
-      <!-- ITEMIZED WAGE RECEIPT TABLE -->
-      <div class="space-y-2">
-        <h3 class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-800/60 pb-1.5 pdf-text-muted">COMPENSATION BREAKDOWN</h3>
-        
-        <div class="divide-y divide-slate-800/60 text-xs">
-          <!-- BASE SALARY -->
-          <div class="py-2.5 flex justify-between items-center">
-            <span class="text-slate-300 font-medium pdf-text-dark">Gaji Pokok (Base Salary)</span>
-            <span id="gajiPokokDisplay" class="font-mono font-bold text-white pdf-text-dark">Rp 0</span>
-          </div>
-
-          <!-- MEAL ALLOWANCE -->
-          <div class="py-2.5 flex justify-between items-center">
-            <span class="text-slate-300 font-medium pdf-text-dark">Uang Makan (Meal Allowance)</span>
-            <span id="uangMakanDisplay" class="font-mono font-bold text-white pdf-text-dark">Rp 0</span>
-          </div>
-
-          <!-- BONUS KERAJINAN (PUNCTUALITY) -->
-          <div class="py-2.5 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-              <span class="text-slate-300 font-medium pdf-text-dark">Bonus Kerajinan (Punctuality)</span>
-              <span id="kerajinanBadge" class="text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">Eligible</span>
-            </div>
-            <span id="kerajinanDisplay" class="font-mono font-bold text-emerald-400 pdf-text-emerald">+Rp 0</span>
-          </div>
-
-          <!-- INCENTIVE / FIXED BONUS -->
-          <div id="insentifRow" class="py-2.5 flex justify-between items-center">
-            <span class="text-slate-300 font-medium pdf-text-dark">Insentif (Incentive)</span>
-            <span id="insentifDisplay" class="font-mono font-bold text-white pdf-text-dark">Rp 0</span>
-          </div>
-
-          <!-- VARIABLE PERFORMANCE BONUS -->
-          <div id="variableBonusRow" class="py-2.5 flex justify-between items-center">
-            <span id="variableBonusLabel" class="text-slate-300 font-medium pdf-text-dark">Komisi / Performance Bonus</span>
-            <span id="variableBonusDisplay" class="font-mono font-bold text-emerald-400 pdf-text-emerald">+Rp 0</span>
-          </div>
-
-          <!-- CLEANING ALLOWANCE (EXPLICIT ROW FOR HELPER) -->
-          <div id="cleaningAllowanceRow" class="hidden py-2.5 flex justify-between items-center">
-            <span class="text-slate-300 font-medium pdf-text-dark">Cleaning Allowance</span>
-            <span class="font-mono font-bold text-emerald-400 pdf-text-emerald">+Rp 1,000,000</span>
-          </div>
-
-          <!-- POTONGAN KASBON -->
-          <div class="py-2.5 flex justify-between items-center bg-rose-950/20 px-2 -mx-2 rounded-lg border border-rose-900/30 pdf-bg-light">
-            <div>
-              <span class="text-rose-300 font-semibold block pdf-text-rose">Potongan Kasbon (Loan Deduction)</span>
-              <span id="sisaKasbonSubtext" class="text-[10px] text-slate-400 pdf-text-muted">Remaining Sisa Kasbon: Rp 0</span>
-            </div>
-            <span id="potonganKasbonDisplay" class="font-mono font-bold text-rose-400 pdf-text-rose">-Rp 0</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- FINAL TOTAL TAKE HOME PAY (FIXED CONTRAST BOX) -->
-      <div class="bg-gradient-to-r from-emerald-950/90 via-slate-900/90 to-emerald-950/90 border border-emerald-800/80 p-5 rounded-xl flex items-center justify-between shadow-inner pdf-total-box">
-        <div>
-          <span class="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400 block pdf-text-emerald">THP / GAJI BERSIH DITERIMA</span>
-          <span class="text-[11px] text-slate-400 pdf-text-muted">Total Net Take Home Pay</span>
-        </div>
-        <span id="totalWageDisplay" class="text-2xl font-black font-mono text-emerald-300 tracking-tight pdf-text-emerald">Rp 0</span>
-      </div>
-
-      <!-- TIMESTAMP & FOOTER -->
-      <div class="pt-2 border-t border-slate-800/60 flex justify-end items-center text-[10px] text-slate-500 pdf-text-muted">
-        <span>Generated: <span id="dateDisplay" class="font-mono text-slate-400 pdf-text-muted">-</span></span>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- OWNER EDIT MODAL (MR. THUSEN) -->
-  <div id="editModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50 no-print">
-    <div class="max-w-lg w-full glass-card p-6 rounded-2xl border border-amber-500/40 shadow-2xl space-y-5 bg-slate-900/95 max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div>
-          <h3 class="text-base font-bold text-amber-400">Edit Payslip Record</h3>
-          <p class="text-xs text-slate-400">Modify baseline wages or monthly performance metrics.</p>
-        </div>
-        <button type="button" id="closeEditModalBtn" class="text-slate-400 hover:text-white p-1">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-      </div>
-
-      <form id="editForm" class="space-y-4">
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">Gaji Pokok (IDR)</label>
-            <input type="text" id="editGajiPokok" class="money-input w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
-          </div>
-          <div>
-            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">Uang Makan (IDR)</label>
-            <input type="text" id="editUangMakan" class="money-input w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">Insentif (IDR)</label>
-            <input type="text" id="editInsentif" class="money-input w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
-          </div>
-          <div>
-            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">Potongan Kasbon (IDR)</label>
-            <input type="text" id="editPotonganKasbon" class="money-input w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">Bonus Kerajinan</label>
-          <select id="editKerajinanBonus" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500">
-            <option value="true">Eligible (+300,000)</option>
-            <option value="false">Ineligible (0)</option>
-          </select>
-        </div>
-
-        <!-- DYNAMIC EDIT METRICS CONTAINER -->
-        <div id="editDynamicMetrics" class="space-y-4 pt-2 border-t border-slate-800"></div>
-
-        <div class="flex justify-end gap-3 pt-3">
-          <button type="button" id="cancelEditBtn" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold uppercase tracking-wider">Cancel</button>
-          <button type="submit" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-amber-600/30">Save Changes</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyCID8HBa-82SOKDrJ5-7FfBpHanUyPgISs",
-      authDomain: "payroll-tracker-55409.firebaseapp.com",
-      projectId: "payroll-tracker-55409",
-      storageBucket: "payroll-tracker-55409.firebasestorage.app",
-      messagingSenderId: "336268687896",
-      appId: "1:336268687896:web:666719cdb5ce72db27616d"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    const themeToggleBtn = document.getElementById('themeToggleBtn');
-    const themeIconSun = document.getElementById('themeIconSun');
-    const themeIconMoon = document.getElementById('themeIconMoon');
-
-    function applyTheme(theme) {
-      if (theme === 'light') {
-        document.documentElement.classList.add('light');
-        if (themeIconSun) themeIconSun.classList.remove('hidden');
-        if (themeIconMoon) themeIconMoon.classList.add('hidden');
-      } else {
-        document.documentElement.classList.remove('light');
-        if (themeIconSun) themeIconSun.classList.add('hidden');
-        if (themeIconMoon) themeIconMoon.classList.remove('hidden');
-      }
-    }
-
-    const savedTheme = localStorage.getItem('payrollTheme') || 'dark';
-    applyTheme(savedTheme);
-
-    if (themeToggleBtn) {
-      themeToggleBtn.addEventListener('click', () => {
-        const currentTheme = document.documentElement.classList.contains('light') ? 'dark' : 'light';
-        localStorage.setItem('payrollTheme', currentTheme);
-        applyTheme(currentTheme);
-      });
-    }
-
-    let data = JSON.parse(localStorage.getItem('selectedWorker'));
-    const activeUser = sessionStorage.getItem('activePayrollUser');
-    const returnBtn = document.getElementById('returnBtn');
-    const editRecordBtn = document.getElementById('editRecordBtn');
-
-    if (returnBtn) {
-      if (activeUser === 'Thusen') {
-        returnBtn.href = 'payroll.html?user=Thusen';
-      } else if (data && data.workerType && activeUser) {
-        returnBtn.href = `payroll.html?type=${encodeURIComponent(data.workerType)}&user=${encodeURIComponent(activeUser)}`;
-      } else {
-        returnBtn.href = 'index.html';
-      }
-    }
-
-    if (activeUser === 'Thusen' && editRecordBtn) {
-      editRecordBtn.classList.remove('hidden');
-    }
-
-    let formattedPdfFilename = "Payslip.pdf";
-
-    function renderPayslipView(record) {
-      if (!record) return;
-
-      document.getElementById('workerNameDisplay').textContent = record.workerName;
-      document.getElementById('workerTypeDisplay').textContent = `Category: ${record.workerType}`;
-      document.getElementById('totalWageDisplay').textContent = `Rp ${(record.totalWage || 0).toLocaleString('en-US')}`;
-
-      const formattedPeriodStr = record.recordMonth 
-        ? new Date(`${record.recordMonth}-01`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-        : 'N/A';
-
-      document.getElementById('periodDisplay').textContent = formattedPeriodStr;
-      formattedPdfFilename = `${record.workerName}, ${formattedPeriodStr}.pdf`;
-
-      document.getElementById('gajiPokokDisplay').textContent = `Rp ${(record.defaultGajiPokok || 0).toLocaleString('en-US')}`;
-      document.getElementById('uangMakanDisplay').textContent = `Rp ${(record.uangMakan || 0).toLocaleString('en-US')}`;
-      document.getElementById('insentifDisplay').textContent = `Rp ${(record.insentif || 0).toLocaleString('en-US')}`;
-
-      const kerajinanBadge = document.getElementById('kerajinanBadge');
-      if (record.hasKerajinanBonus) {
-        kerajinanBadge.textContent = 'Eligible';
-        kerajinanBadge.className = 'text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-wider bg-emerald-950/80 text-emerald-400 border border-emerald-800';
-        document.getElementById('kerajinanDisplay').textContent = '+Rp 300,000';
-      } else {
-        kerajinanBadge.textContent = 'Ineligible';
-        kerajinanBadge.className = 'text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-wider bg-rose-950/80 text-rose-400 border border-rose-800';
-        document.getElementById('kerajinanDisplay').textContent = 'Rp 0';
-      }
-
-      const m = record.metrics || {};
-      const metricsText = document.getElementById('metricsText');
-      const variableBonusRow = document.getElementById('variableBonusRow');
-      const variableBonusLabel = document.getElementById('variableBonusLabel');
-      const variableBonusDisplay = document.getElementById('variableBonusDisplay');
-      const cleaningAllowanceRow = document.getElementById('cleaningAllowanceRow');
-
-      let varBonusAmt = 0;
-
-      if (record.workerType === "Admin GPS") {
-        varBonusAmt = (m.unitCount || 0) * 5000;
-        metricsText.textContent = `GPS Units Sold: ${m.unitCount || 0} unit(s) @ Rp 5,000 / unit`;
-        variableBonusLabel.textContent = "Bonus Penjualan GPS";
-      } else if (record.workerType === "Sales HPZ") {
-        varBonusAmt = (m.sales3Months || 0) * 0.01;
-        metricsText.textContent = `Total 3-Month Sales: Rp ${(m.sales3Months || 0).toLocaleString('en-US')} (1% Commission)`;
-        variableBonusLabel.textContent = "Komisi Penjualan (1%)";
-      } else if (record.workerType === "Mekanik HPZ") {
-        varBonusAmt = (m.instalasiHpzAmount || 0) * 0.01;
-        metricsText.textContent = `Monthly Installation Sales: Rp ${(m.instalasiHpzAmount || 0).toLocaleString('en-US')} (1% Commission)`;
-        variableBonusLabel.textContent = "Komisi Instalasi HPZ (1%)";
-      } else if (record.workerType === "Mekanik GPS") {
-        varBonusAmt = ((m.pasangGpsUnits || 0) * 25000) + ((m.cekGpsUnits || 0) * 15000);
-        metricsText.textContent = `Pasang GPS: ${m.pasangGpsUnits || 0} unit(s) | Cek GPS: ${m.cekGpsUnits || 0} unit(s)`;
-        variableBonusLabel.textContent = "Bonus Unit GPS (Pasang & Cek)";
-      } else if (record.workerType === "Mekanik CCTV") {
-        varBonusAmt = ((m.pasangCctvUnits || 0) * 25000) + ((m.servisCctvUnits || 0) * 15000);
-        metricsText.textContent = `Pasang CCTV: ${m.pasangCctvUnits || 0} unit(s) | Servis CCTV: ${m.servisCctvUnits || 0} unit(s)`;
-        variableBonusLabel.textContent = "Bonus CCTV (Pasang & Servis)";
-      } else if (record.workerType === "Helper") {
-        varBonusAmt = ((m.pasangGpsUnits || 0) * 25000) + ((m.cekGpsUnits || 0) * 15000);
-        metricsText.textContent = `Pasang GPS: ${m.pasangGpsUnits || 0} unit(s) | Cek GPS: ${m.cekGpsUnits || 0} unit(s)`;
-        variableBonusLabel.textContent = "Bonus Unit GPS (Helper)";
-        cleaningAllowanceRow.classList.remove('hidden');
-      } else {
-        document.getElementById('metricsSummaryBox').classList.add('hidden');
-        variableBonusRow.classList.add('hidden');
-      }
-
-      if (varBonusAmt > 0) {
-        variableBonusDisplay.textContent = `+Rp ${varBonusAmt.toLocaleString('en-US')}`;
-      } else if (record.workerType !== "Admin GPS" && record.workerType !== "Sales HPZ" && record.workerType !== "Mekanik HPZ" && record.workerType !== "Mekanik GPS" && record.workerType !== "Mekanik CCTV" && record.workerType !== "Helper") {
-        variableBonusRow.classList.add('hidden');
-      } else {
-        variableBonusDisplay.textContent = `Rp 0`;
-      }
-
-      document.getElementById('potonganKasbonDisplay').textContent = `-Rp ${(record.potonganKasbon || 0).toLocaleString('en-US')}`;
-      document.getElementById('sisaKasbonSubtext').textContent = `Sisa Kasbon Setelah Potongan: Rp ${(record.sisaKasbon || 0).toLocaleString('en-US')}`;
-      document.getElementById('dateDisplay').textContent = record.formattedDateTime || 'N/A';
-    }
-
-    if (data) {
-      renderPayslipView(data);
-    } else {
-      document.querySelector('.max-w-2xl').innerHTML = `
-        <p class="text-center text-slate-400 text-xs">No worker data found. <a href="index.html" class="text-indigo-400 underline">Return to Selection</a></p>
-      `;
-    }
-
-    // FORMAL DOCUMENT PDF GENERATION HANDLER
-    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
-    const downloadBtnText = document.getElementById('downloadBtnText');
-
-    if (downloadPdfBtn) {
-      downloadPdfBtn.addEventListener('click', () => {
-        downloadBtnText.textContent = 'Generating PDF...';
-        const payslipElement = document.getElementById('payslipContent');
-        payslipElement.classList.add('pdf-mode');
-
-        const pdfOptions = {
-          margin:       [0.3, 0.3, 0.3, 0.3],
-          filename:     formattedPdfFilename,
-          image:        { type: 'jpeg', quality: 0.98 },
-          html2canvas:  { scale: 2, useCORS: true, logging: false },
-          jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-        };
-
-        html2pdf().set(pdfOptions).from(payslipElement).save().then(() => {
-          payslipElement.classList.remove('pdf-mode');
-          downloadBtnText.textContent = 'Download Payslip PDF';
-        }).catch((err) => {
-          console.error("PDF generation error: ", err);
-          payslipElement.classList.remove('pdf-mode');
-          downloadBtnText.textContent = 'Download Payslip PDF';
-          alert("Could not generate PDF directly. Falling back to browser print.");
-          window.print();
-        });
-      });
-    }
-
-    // OWNER EDIT MODAL LOGIC (MR. THUSEN)
-    const editModal = document.getElementById('editModal');
-    const closeEditModalBtn = document.getElementById('closeEditModalBtn');
-    const cancelEditBtn = document.getElementById('cancelEditBtn');
-    const editForm = document.getElementById('editForm');
-    const editDynamicMetrics = document.getElementById('editDynamicMetrics');
-
-    function formatCurrencyString(val) {
-      const digits = String(val).replace(/\D/g, "");
-      return digits ? Number(digits).toLocaleString('en-US') : "";
-    }
-
-    function parseCurrencyNumber(formattedStr) {
-      return Number(String(formattedStr).replace(/\D/g, "")) || 0;
-    }
-
-    function calculateTHP(rec, gajiPokok, meal, insentif, potongan, bonusKerajinanEligible, metrics) {
-      const bonusKerajinan = bonusKerajinanEligible ? 300000 : 0;
-      let varBonus = 0;
-
-      switch (rec.workerType) {
-        case "Admin GPS":
-          varBonus = (metrics.unitCount || 0) * 5000;
-          return gajiPokok + meal + bonusKerajinan + insentif + varBonus - potongan;
-        case "Sales HPZ":
-          varBonus = (metrics.sales3Months || 0) * 0.01;
-          return meal + varBonus - potongan;
-        case "Mekanik HPZ":
-          varBonus = (metrics.instalasiHpzAmount || 0) * 0.01;
-          return gajiPokok + meal + bonusKerajinan + insentif + varBonus - potongan;
-        case "Mekanik GPS":
-          varBonus = ((metrics.pasangGpsUnits || 0) * 25000) + ((metrics.cekGpsUnits || 0) * 15000);
-          return gajiPokok + meal + bonusKerajinan + insentif + varBonus - potongan;
-        case "Mekanik CCTV":
-          varBonus = ((metrics.pasangCctvUnits || 0) * 25000) + ((metrics.servisCctvUnits || 0) * 15000);
-          return gajiPokok + meal + bonusKerajinan + insentif + varBonus - potongan;
-        case "Helper":
-          varBonus = ((metrics.pasangGpsUnits || 0) * 25000) + ((metrics.cekGpsUnits || 0) * 15000) + (metrics.cleaningServiceAllowance || 1000000);
-          return gajiPokok + meal + bonusKerajinan + insentif + varBonus - potongan;
-        default:
-          return gajiPokok + meal + bonusKerajinan + insentif - potongan;
-      }
-    }
-
-    if (editRecordBtn) {
-      editRecordBtn.addEventListener('click', () => {
-        if (!data) return;
-
-        document.getElementById('editGajiPokok').value = formatCurrencyString(data.defaultGajiPokok || 0);
-        document.getElementById('editUangMakan').value = formatCurrencyString(data.uangMakan || 0);
-        document.getElementById('editInsentif').value = formatCurrencyString(data.insentif || 0);
-        document.getElementById('editPotonganKasbon').value = formatCurrencyString(data.potonganKasbon || 0);
-        document.getElementById('editKerajinanBonus').value = data.hasKerajinanBonus ? "true" : "false";
-
-        // Bind currency input formatters
-        document.querySelectorAll('#editModal .money-input').forEach(input => {
-          input.oninput = (e) => e.target.value = formatCurrencyString(e.target.value);
-        });
-
-        // Dynamic metrics builder
-        const m = data.metrics || {};
-        let html = '';
-
-        if (data.workerType === "Admin GPS") {
-          html = `
-            <div>
-              <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-1">GPS Units Sold</label>
-              <input type="number" id="editUnitCount" value="${m.unitCount || 0}" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
-            </div>`;
-        } else if (data.workerType === "Sales HPZ") {
-          html = `
-            <div>
-              <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-1">3-Month Sales Amount (IDR)</label>
-              <input type="text" id="editSales3Months" value="${formatCurrencyString(m.sales3Months || 0)}" class="money-input w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
-            </div>`;
-        } else if (data.workerType === "Mekanik HPZ") {
-          html = `
-            <div>
-              <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-1">Monthly Installation Sales (IDR)</label>
-              <input type="text" id="editInstalasiHpzAmount" value="${formatCurrencyString(m.instalasiHpzAmount || 0)}" class="money-input w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
-            </div>`;
-        } else if (data.workerType === "Mekanik GPS" || data.workerType === "Helper") {
-          html = `
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-1">Pasang GPS Units</label>
-                <input type="number" id="editPasangGpsUnits" value="${m.pasangGpsUnits || 0}" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
-              </div>
-              <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-1">Cek GPS Units</label>
-                <input type="number" id="editCekGpsUnits" value="${m.cekGpsUnits || 0}" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
-              </div>
-            </div>`;
-        } else if (data.workerType === "Mekanik CCTV") {
-          html = `
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-1">Pasang CCTV Units</label>
-                <input type="number" id="editPasangCctvUnits" value="${m.pasangCctvUnits || 0}" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
-              </div>
-              <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-1">Servis CCTV Units</label>
-                <input type="number" id="editServisCctvUnits" value="${m.servisCctvUnits || 0}" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-mono">
-              </div>
-            </div>`;
-        }
-
-        editDynamicMetrics.innerHTML = html;
-        document.querySelectorAll('#editModal .money-input').forEach(input => {
-          input.oninput = (e) => e.target.value = formatCurrencyString(e.target.value);
-        });
-
-        editModal.classList.remove('hidden');
-        editModal.classList.add('flex');
-      });
-    }
-
-    function closeModal() {
-      editModal.classList.add('hidden');
-      editModal.classList.remove('flex');
-    }
-
-    if (closeEditModalBtn) closeEditModalBtn.addEventListener('click', closeModal);
-    if (cancelEditBtn) cancelEditBtn.addEventListener('click', closeModal);
-
-    if (editForm) {
-      editForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (!data || !data.id) {
-          alert("Error: Missing record identifier.");
-          return;
-        }
-
-        const newGajiPokok = parseCurrencyNumber(document.getElementById('editGajiPokok').value);
-        const newUangMakan = parseCurrencyNumber(document.getElementById('editUangMakan').value);
-        const newInsentif = parseCurrencyNumber(document.getElementById('editInsentif').value);
-        const newPotongan = parseCurrencyNumber(document.getElementById('editPotonganKasbon').value);
-        const newKerajinanEligible = document.getElementById('editKerajinanBonus').value === "true";
-
-        let newMetrics = { ...data.metrics };
-
-        if (data.workerType === "Admin GPS") {
-          newMetrics.unitCount = Number(document.getElementById('editUnitCount')?.value || 0);
-        } else if (data.workerType === "Sales HPZ") {
-          newMetrics.sales3Months = parseCurrencyNumber(document.getElementById('editSales3Months')?.value || 0);
-        } else if (data.workerType === "Mekanik HPZ") {
-          newMetrics.instalasiHpzAmount = parseCurrencyNumber(document.getElementById('editInstalasiHpzAmount')?.value || 0);
-        } else if (data.workerType === "Mekanik GPS" || data.workerType === "Helper") {
-          newMetrics.pasangGpsUnits = Number(document.getElementById('editPasangGpsUnits')?.value || 0);
-          newMetrics.cekGpsUnits = Number(document.getElementById('editCekGpsUnits')?.value || 0);
-          if (data.workerType === "Helper") newMetrics.cleaningServiceAllowance = 1000000;
-        } else if (data.workerType === "Mekanik CCTV") {
-          newMetrics.pasangCctvUnits = Number(document.getElementById('editPasangCctvUnits')?.value || 0);
-          newMetrics.servisCctvUnits = Number(document.getElementById('editServisCctvUnits')?.value || 0);
-        }
-
-        try {
-          await updateDoc(doc(db, "payroll_records", data.id), {
-            hasKerajinanBonus: newKerajinanEligible,
-            metrics: newMetrics
-          });
-
-          const sisaKasbonCalc = Math.max(0, (data.kasbonLama || 0) - newPotongan);
-          await setDoc(doc(db, "default_wages", data.workerName), {
-            workerName: data.workerName,
-            defaultGajiPokok: newGajiPokok,
-            uangMakan: newUangMakan,
-            insentif: newInsentif,
-            kasbonLama: data.kasbonLama || 0,
-            potonganKasbon: newPotongan
-          }, { merge: true });
-
-          const recalculatedTHP = calculateTHP(data, newGajiPokok, newUangMakan, newInsentif, newPotongan, newKerajinanEligible, newMetrics);
-
-          data = {
-            ...data,
-            defaultGajiPokok: newGajiPokok,
-            uangMakan: newUangMakan,
-            insentif: newInsentif,
-            potonganKasbon: newPotongan,
-            sisaKasbon: sisaKasbonCalc,
-            hasKerajinanBonus: newKerajinanEligible,
-            metrics: newMetrics,
-            totalWage: recalculatedTHP
-          };
-
-          localStorage.setItem('selectedWorker', JSON.stringify(data));
-          renderPayslipView(data);
-
-          alert(`Payslip record for ${data.workerName} updated successfully.`);
-          closeModal();
-        } catch (err) {
-          console.error("Error saving updates: ", err);
-          alert("Could not update record in database. Please check console.");
-        }
-      });
-    }
   </script>
 </body>
 </html>
