@@ -1,12 +1,7 @@
 /* ==========================================================================
    Payroll Portal — shared design system
-   --------------------------------------------------------------------------
-   Theme CSS variables (--c-*) live INLINE in each HTML file, not here, so a
-   stale cached stylesheet can never break theme switching. This file only
-   consumes those variables.
    ========================================================================== */
 
-/* ---------- base ---------- */
 * { -webkit-tap-highlight-color: transparent; }
 
 html { scroll-behavior: smooth; }
@@ -67,12 +62,6 @@ html.light select.field {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
 }
 
-/* ---------- month / date inputs ----------
-   The native picker indicator is drawn in a fixed tone that is invisible
-   on dark backgrounds. We hide it with opacity:0 (keeping its hit area so
-   the calendar still opens on click) and draw our own icon as a background
-   image that swaps stroke colour per theme.
-   ----------------------------------------- */
 input[type="month"].field,
 input[type="date"].field {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E");
@@ -145,11 +134,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background-color: rgb(var(--c-panel) / .6);
 }
 
-/* ---------- collapsible ----------
-   Visibility is driven by JS via panel.style.display. This rule is only a
-   fallback so the panel doesn't flash before the script runs. Deliberately
-   NO !important so inline style can always override it.
-   ---------------------------------------------------------------- */
 .collapsible.is-collapsed {
   display: none;
 }
@@ -202,7 +186,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 *::-webkit-scrollbar-thumb:hover { background-color: rgb(var(--c-muted)); background-clip: content-box; }
 
-/* ---------- reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: .001ms !important;
