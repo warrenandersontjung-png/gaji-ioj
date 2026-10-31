@@ -219,7 +219,7 @@
 
     const BONUS_KERAJINAN = 300_000, CLEANING_ALLOWANCE = 1_000_000;
     const RATES = { gpsUnit: 5_000, gpsInstall: 25_000, gpsCheck: 15_000, cctvInstall: 25_000, cctvService: 15_000, salesCommission: 0.01 };
-    const CATEGORIES = ["Admin GPS", "Finance GPS", "Finance VNS", "Admin HPZ", "Finance HPZ", "Team comm", "Sales HPZ", "Gudang", "Driver", "Mekanik HPZ", "Mekanik GPS", "Mekanik CCTV", "Helper"];
+    const CATEGORIES = ["Admin GPS", "Finance HPZ", "Finance VNS", "Admin HPZ", "Team comm", "Sales HPZ", "Gudang", "Driver", "Mekanik HPZ", "Mekanik GPS", "Mekanik CCTV", "Helper"];
     const LOMBOK_NAMES = new Set(["Efendi Zulsilhamdi", "Afrilia Indriyani", "Iwan Pratama", "Ni Kadek Dwina Suryani Dewi"]);
 
     function toast(message, type = 'info', ms = 3600) {
@@ -482,7 +482,7 @@
     }
     async function deleteStaleWageDoc(oldName, newName) { if (oldName === newName) return; try { await deleteDoc(doc(db, 'default_wages', oldName)); } catch (err) {} }
 
-    const DEFAULT_ROSTER_FALLBACK = { "Admin GPS": ["Mei Dhea Cahya Ardika", "Tri Maharani"], "Finance GPS": [], "Finance VNS": ["Christy Martika"], "Admin HPZ": ["Ni Luh Ayu Atmi Kamaratih", "Widya Nurliza", "Ni Luh Febriyanti", "Aldina Verbiana", "Afrilia Indriyani", "Ni Kadek Dwina Suryani Dewi"], "Finance HPZ": ["Wahyuningsih"], "Team comm": ["Tio Atrik Herdiansyah"], "Sales HPZ": ["Richard Antonius", "Iwan Pratama"], "Gudang": ["Pande Gede Ngurah Dana", "Ashera Devi Swarna Vista", "Nadia Ayu Riskiyah Putri", "Ganna Sine Kustury Vegat"], "Driver": ["Hersi Arnantyo", "Wiraganda Pattiwaellapia"], "Mekanik HPZ": ["Rohmad Imam Safii", "Ahmad Ardy Firmansyah", "Candra Bayu Pratama", "Munhamir Amin Almadkur", "Efendi Zulsilhamdi"], "Mekanik GPS": ["Heri Hermansah", "Hauzi Alwi"], "Mekanik CCTV": ["Jackson M Bessie", "Stefanus Rofinus R C"], "Helper": ["Yoyok Ujianto"] };
+    const DEFAULT_ROSTER_FALLBACK = { "Admin GPS": ["Mei Dhea Cahya Ardika", "Tri Maharani"], "Finance HPZ": ["Wahyuningsih"], "Finance VNS": ["Christy Martika"], "Admin HPZ": ["Ni Luh Ayu Atmi Kamaratih", "Widya Nurliza", "Ni Luh Febriyanti", "Aldina Verbiana", "Afrilia Indriyani", "Ni Kadek Dwina Suryani Dewi"], "Team comm": ["Tio Atrik Herdiansyah"], "Sales HPZ": ["Richard Antonius", "Iwan Pratama"], "Gudang": ["Pande Gede Ngurah Dana", "Ashera Devi Swarna Vista", "Nadia Ayu Riskiyah Putri", "Ganna Sine Kustury Vegat"], "Driver": ["Hersi Arnantyo", "Wiraganda Pattiwaellapia"], "Mekanik HPZ": ["Rohmad Imam Safii", "Ahmad Ardy Firmansyah", "Candra Bayu Pratama", "Munhamir Amin Almadkur", "Efendi Zulsilhamdi"], "Mekanik GPS": ["Heri Hermansah", "Hauzi Alwi"], "Mekanik CCTV": ["Jackson M Bessie", "Stefanus Rofinus R C"], "Helper": ["Yoyok Ujianto"] };
 
     editBtn.addEventListener('click', async () => {
       if (!data) return; editBtn.disabled = true;
