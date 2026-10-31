@@ -48,13 +48,13 @@
       .payslip-card { background: #fff !important; border: 1px solid #cbd5e1 !important; box-shadow: none !important; width: 100% !important; max-width: 100% !important; padding: 24px !important; margin: 0 !important; color: #0f172a !important; }
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
-    #pdfStage { display: none; position: fixed; top: 0; left: 0; width: 794px; min-height: 100vh; z-index: 99990; background: #ffffff !important; overflow: visible; margin: 0; padding: 0; }
+    #pdfStage { display: none; position: fixed; top: 0; left: 0; width: 100%; min-height: 100vh; z-index: 99990; background: #ffffff !important; overflow: visible; margin: 0; padding: 0; }
     #pdfStage.is-open { display: block; }
     #pdfStatus { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 99995; display: none; align-items: center; gap: 10px; padding: 10px 18px; border-radius: 999px; background: #0f172a; color: #f1f5f9; font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; box-shadow: 0 12px 30px -10px rgba(0, 0, 0, .6); pointer-events: none; }
     #pdfStatus.is-open { display: inline-flex; }
     #pdfStatus .dot { width: 10px; height: 10px; border: 2px solid #64748b; border-top-color: #818cf8; border-radius: 50%; animation: spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    #pdfTemplate { width: 794px; margin: 0; padding: 48px 46px 44px; box-sizing: border-box; background: #ffffff !important; color: #111827; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11px; line-height: 1.45; }
+    #pdfTemplate { width: 100%; max-width: 794px; margin: 0; padding: 48px 46px 44px; box-sizing: border-box; background: #ffffff !important; color: #111827; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11px; line-height: 1.45; }
     #pdfTemplate * { box-sizing: border-box; }
     #pdfTemplate table.meta { width: 100%; border-collapse: collapse; margin-bottom: 26px; padding-bottom: 18px; border-bottom: 1px solid #d1d5db; }
     #pdfTemplate table.meta td { padding: 5px 0; vertical-align: top; font-size: 10.5px; width: 25%; }
@@ -118,6 +118,10 @@
           <div id="uangMakanRow" class="flex items-center justify-between py-2.5"><span class="font-medium text-fg-soft">Uang Makan (Meal Allowance)</span><span id="uangMakanDisplay" class="font-mono font-bold text-fg">Rp 0</span></div>
           <div id="kerajinanRow" class="flex items-center justify-between py-2.5"><span class="flex items-center gap-2"><span class="font-medium text-fg-soft">Bonus Kerajinan (Punctuality)</span><span id="kerajinanBadge" class="rounded px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">—</span></span><span id="kerajinanDisplay" class="font-mono font-bold text-success">+Rp 0</span></div>
           <div id="insentifRow" class="flex items-center justify-between py-2.5"><span class="font-medium text-fg-soft">Insentif (Incentive)</span><span id="insentifDisplay" class="font-mono font-bold text-fg">Rp 0</span></div>
+          
+          <div id="bonusPasangRow" class="hidden items-center justify-between py-2.5"><span id="bonusPasangLabel" class="font-medium text-fg-soft">Bonus Pasang</span><span id="bonusPasangDisplay" class="font-mono font-bold text-success">+Rp 0</span></div>
+          <div id="bonusServisRow" class="hidden items-center justify-between py-2.5"><span id="bonusServisLabel" class="font-medium text-fg-soft">Bonus Servis / Cek</span><span id="bonusServisDisplay" class="font-mono font-bold text-success">+Rp 0</span></div>
+          
           <div id="variableBonusRow" class="flex items-center justify-between py-2.5"><span id="variableBonusLabel" class="font-medium text-fg-soft">Komisi / Performance Bonus</span><span id="variableBonusDisplay" class="font-mono font-bold text-success">+Rp 0</span></div>
           <div id="cleaningAllowanceRow" class="hidden items-center justify-between py-2.5"><span class="font-medium text-fg-soft">Cleaning Service Allowance</span><span class="font-mono font-bold text-success">+Rp 1.000.000</span></div>
           <div id="potonganKasbonRow" class="hidden -mx-2 items-center justify-between rounded-lg border border-danger/30 bg-danger/10 px-2 py-2.5">
@@ -215,7 +219,7 @@
 
     const BONUS_KERAJINAN = 300_000, CLEANING_ALLOWANCE = 1_000_000;
     const RATES = { gpsUnit: 5_000, gpsInstall: 25_000, gpsCheck: 15_000, cctvInstall: 25_000, cctvService: 15_000, salesCommission: 0.01 };
-    const CATEGORIES = ["Admin GPS", "Finance GPS", "Finance HPZ", "Admin HPZ", "Team comm", "Sales HPZ", "Gudang", "Driver", "Mekanik HPZ", "Mekanik GPS", "Mekanik CCTV", "Helper"];
+    const CATEGORIES = ["Admin GPS", "Finance GPS", "Admin VNS", "Admin HPZ", "Team comm", "Sales HPZ", "Gudang", "Driver", "Mekanik HPZ", "Mekanik GPS", "Mekanik CCTV", "Helper"];
     const LOMBOK_NAMES = new Set(["Efendi Zulsilhamdi", "Afrilia Indriyani", "Iwan Pratama", "Ni Kadek Dwina Suryani Dewi"]);
 
     function toast(message, type = 'info', ms = 3600) {
@@ -257,10 +261,15 @@
     function calculateTHP(rec, opts) {
       const { gajiPokok, uangMakan, insentif, potonganKasbon, kasbonKantor, kerajinanEligible, metrics } = opts;
       const bonusKerajinan = kerajinanEligible ? BONUS_KERAJINAN : 0; const deductions = (potonganKasbon || 0) + (kasbonKantor || 0); const m = metrics || {};
+      
       switch (rec.workerType) {
-        case 'Admin GPS': return gajiPokok + uangMakan + insentif + bonusKerajinan + (m.unitCount || 0) * RATES.gpsUnit - deductions;
-        case 'Sales HPZ': return uangMakan + (m.sales3Months || 0) * RATES.salesCommission - deductions;
-        case 'Mekanik HPZ': return gajiPokok + uangMakan + insentif + bonusKerajinan + (m.instalasiHpzAmount || 0) * RATES.salesCommission - deductions;
+        case 'Admin GPS': 
+          const gpsBonus = (rec.workerName === 'Tri Maharani') ? 0 : (m.unitCount || 0) * RATES.gpsUnit;
+          return gajiPokok + uangMakan + insentif + bonusKerajinan + gpsBonus - deductions;
+        case 'Sales HPZ': return uangMakan + (m.sales2MonthsAgo || 0) * RATES.salesCommission - deductions;
+        case 'Mekanik HPZ': 
+          const insBonus = (rec.workerName === 'Rohmad Imam Safii') ? (m.instalasiHpzAmount || 0) * RATES.salesCommission : 0;
+          return gajiPokok + uangMakan + insentif + bonusKerajinan + insBonus - deductions;
         case 'Mekanik GPS': return gajiPokok + uangMakan + insentif + bonusKerajinan + (m.pasangGpsUnits || 0) * RATES.gpsInstall + (m.cekGpsUnits || 0) * RATES.gpsCheck - deductions;
         case 'Mekanik CCTV': return gajiPokok + uangMakan + insentif + bonusKerajinan + (m.pasangCctvUnits || 0) * RATES.cctvInstall + (m.servisCctvUnits || 0) * RATES.cctvService - deductions;
         case 'Helper': return gajiPokok + uangMakan + insentif + bonusKerajinan + (m.pasangGpsUnits || 0) * RATES.gpsInstall + (m.cekGpsUnits || 0) * RATES.gpsCheck + (m.cleaningServiceAllowance ?? CLEANING_ALLOWANCE) - deductions;
@@ -277,7 +286,10 @@
       if (!isSales) $('gajiPokokDisplay').textContent = rupiah(record.defaultGajiPokok || 0);
       $('uangMakanDisplay').textContent = rupiah(record.uangMakan || 0);
 
-      const insentifValue = Number(record.insentif) || 0; const insentifRow = $('insentifRow');
+      let insentifValue = Number(record.insentif) || 0;
+      if (record.workerName === 'Tri Maharani' && record.metrics?.insentifOverride !== undefined) insentifValue = record.metrics.insentifOverride;
+      
+      const insentifRow = $('insentifRow');
       if (!isSales && insentifValue > 0) { insentifRow.classList.remove('hidden'); insentifRow.classList.add('flex'); $('insentifDisplay').textContent = rupiah(insentifValue); } else { insentifRow.classList.add('hidden'); insentifRow.classList.remove('flex'); }
 
       const kerajinanRow = $('kerajinanRow'), kerajinanVisible = !isSales && !lombok;
@@ -289,15 +301,59 @@
       }
 
       const m = record.metrics || {}, metricsBox = $('metricsSummaryBox'), varRow = $('variableBonusRow'), cleaningRow = $('cleaningAllowanceRow');
-      cleaningRow.classList.add('hidden'); cleaningRow.classList.remove('flex'); metricsBox.classList.remove('hidden'); varRow.classList.remove('hidden'); varRow.classList.add('flex');
+      const bPasangRow = $('bonusPasangRow'), bServisRow = $('bonusServisRow');
+      cleaningRow.classList.add('hidden'); cleaningRow.classList.remove('flex'); 
+      bPasangRow.classList.add('hidden'); bPasangRow.classList.remove('flex');
+      bServisRow.classList.add('hidden'); bServisRow.classList.remove('flex');
+      
+      metricsBox.classList.remove('hidden'); varRow.classList.remove('hidden'); varRow.classList.add('flex');
       let variableAmt = 0;
+      
       switch (record.workerType) {
-        case 'Admin GPS': variableAmt = (m.unitCount || 0) * RATES.gpsUnit; $('metricsText').textContent = `GPS units sold: ${m.unitCount || 0} × ${rupiah(RATES.gpsUnit)}`; $('variableBonusLabel').textContent = 'Bonus Penjualan GPS'; break;
-        case 'Sales HPZ': variableAmt = (m.sales3Months || 0) * RATES.salesCommission; $('metricsText').textContent = `3-month sales total: ${rupiah(m.sales3Months || 0)} (1% commission)`; $('variableBonusLabel').textContent = 'Komisi Penjualan (1%)'; break;
-        case 'Mekanik HPZ': variableAmt = (m.instalasiHpzAmount || 0) * RATES.salesCommission; $('metricsText').textContent = `Monthly installation sales: ${rupiah(m.instalasiHpzAmount || 0)} (1% commission)`; $('variableBonusLabel').textContent = 'Komisi Instalasi HPZ (1%)'; break;
-        case 'Mekanik GPS': variableAmt = (m.pasangGpsUnits || 0) * RATES.gpsInstall + (m.cekGpsUnits || 0) * RATES.gpsCheck; $('metricsText').textContent = `Pasang GPS: ${m.pasangGpsUnits || 0} · Cek GPS: ${m.cekGpsUnits || 0}`; $('variableBonusLabel').textContent = 'Bonus Unit GPS'; break;
-        case 'Mekanik CCTV': variableAmt = (m.pasangCctvUnits || 0) * RATES.cctvInstall + (m.servisCctvUnits || 0) * RATES.cctvService; $('metricsText').textContent = `Pasang CCTV: ${m.pasangCctvUnits || 0} · Servis CCTV: ${m.servisCctvUnits || 0}`; $('variableBonusLabel').textContent = 'Bonus CCTV'; break;
-        case 'Helper': variableAmt = (m.pasangGpsUnits || 0) * RATES.gpsInstall + (m.cekGpsUnits || 0) * RATES.gpsCheck; $('metricsText').textContent = `Pasang GPS: ${m.pasangGpsUnits || 0} · Cek GPS: ${m.cekGpsUnits || 0}`; $('variableBonusLabel').textContent = 'Bonus Unit GPS (Helper)'; cleaningRow.classList.remove('hidden'); cleaningRow.classList.add('flex'); break;
+        case 'Admin GPS': 
+          if (record.workerName === 'Tri Maharani') {
+              metricsBox.classList.add('hidden'); varRow.classList.add('hidden'); varRow.classList.remove('flex');
+          } else {
+              variableAmt = (m.unitCount || 0) * RATES.gpsUnit; $('metricsText').textContent = `GPS units sold: ${m.unitCount || 0} × ${rupiah(RATES.gpsUnit)}`; $('variableBonusLabel').textContent = 'Bonus Penjualan GPS'; 
+          }
+          break;
+        case 'Sales HPZ': 
+          variableAmt = (m.sales2MonthsAgo || 0) * RATES.salesCommission; $('metricsText').textContent = `2-month ago sales: ${rupiah(m.sales2MonthsAgo || 0)} (1% commission)`; $('variableBonusLabel').textContent = 'Komisi Penjualan (1%)'; break;
+        case 'Mekanik HPZ': 
+          if (record.workerName === 'Rohmad Imam Safii') {
+              variableAmt = (m.instalasiHpzAmount || 0) * RATES.salesCommission; $('metricsText').textContent = `Monthly installation sales: ${rupiah(m.instalasiHpzAmount || 0)} (1% commission)`; $('variableBonusLabel').textContent = 'Komisi Instalasi HPZ (1%)';
+          } else {
+              metricsBox.classList.add('hidden'); varRow.classList.add('hidden'); varRow.classList.remove('flex');
+          }
+          break;
+        case 'Mekanik GPS': 
+          const gpsP = (m.pasangGpsUnits || 0) * RATES.gpsInstall; const gpsC = (m.cekGpsUnits || 0) * RATES.gpsCheck;
+          variableAmt = gpsP + gpsC; 
+          $('metricsText').textContent = `Pasang GPS: ${m.pasangGpsUnits || 0} · Cek GPS: ${m.cekGpsUnits || 0}`; 
+          $('variableBonusLabel').className = 'font-bold text-success'; $('variableBonusLabel').textContent = 'Total Bonus Mekanik';
+          varRow.className = 'flex items-center justify-between py-2.5 bg-success/5 px-2 rounded';
+          bPasangRow.classList.replace('hidden', 'flex'); $('bonusPasangLabel').textContent = `Bonus Pasang GPS (${m.pasangGpsUnits || 0} units)`; $('bonusPasangDisplay').textContent = `+${rupiah(gpsP)}`;
+          bServisRow.classList.replace('hidden', 'flex'); $('bonusServisLabel').textContent = `Bonus Cek GPS (${m.cekGpsUnits || 0} units)`; $('bonusServisDisplay').textContent = `+${rupiah(gpsC)}`;
+          break;
+        case 'Mekanik CCTV': 
+          const cctvP = (m.pasangCctvUnits || 0) * RATES.cctvInstall; const cctvS = (m.servisCctvUnits || 0) * RATES.cctvService;
+          variableAmt = cctvP + cctvS; 
+          $('metricsText').textContent = `Pasang CCTV: ${m.pasangCctvUnits || 0} · Servis CCTV: ${m.servisCctvUnits || 0}`; 
+          $('variableBonusLabel').className = 'font-bold text-success'; $('variableBonusLabel').textContent = 'Total Bonus Mekanik';
+          varRow.className = 'flex items-center justify-between py-2.5 bg-success/5 px-2 rounded';
+          bPasangRow.classList.replace('hidden', 'flex'); $('bonusPasangLabel').textContent = `Bonus Pasang CCTV (${m.pasangCctvUnits || 0} units)`; $('bonusPasangDisplay').textContent = `+${rupiah(cctvP)}`;
+          bServisRow.classList.replace('hidden', 'flex'); $('bonusServisLabel').textContent = `Bonus Servis CCTV (${m.servisCctvUnits || 0} units)`; $('bonusServisDisplay').textContent = `+${rupiah(cctvS)}`;
+          break;
+        case 'Helper': 
+          const hP = (m.pasangGpsUnits || 0) * RATES.gpsInstall; const hC = (m.cekGpsUnits || 0) * RATES.gpsCheck;
+          variableAmt = hP + hC; 
+          $('metricsText').textContent = `Pasang GPS: ${m.pasangGpsUnits || 0} · Cek GPS: ${m.cekGpsUnits || 0}`; 
+          $('variableBonusLabel').className = 'font-bold text-success'; $('variableBonusLabel').textContent = 'Total Bonus Mekanik';
+          varRow.className = 'flex items-center justify-between py-2.5 bg-success/5 px-2 rounded';
+          bPasangRow.classList.replace('hidden', 'flex'); $('bonusPasangLabel').textContent = `Bonus Pasang GPS (${m.pasangGpsUnits || 0} units)`; $('bonusPasangDisplay').textContent = `+${rupiah(hP)}`;
+          bServisRow.classList.replace('hidden', 'flex'); $('bonusServisLabel').textContent = `Bonus Cek GPS (${m.cekGpsUnits || 0} units)`; $('bonusServisDisplay').textContent = `+${rupiah(hC)}`;
+          cleaningRow.classList.remove('hidden'); cleaningRow.classList.add('flex'); 
+          break;
         default: metricsBox.classList.add('hidden'); varRow.classList.add('hidden'); varRow.classList.remove('flex');
       }
       if (!varRow.classList.contains('hidden')) $('variableBonusDisplay').textContent = variableAmt > 0 ? `+${rupiah(variableAmt)}` : 'Rp 0';
@@ -316,7 +372,10 @@
     }
 
     function buildPdfContent(record) {
-      const m = record.metrics || {}, isSales = record.workerType === 'Sales HPZ', lombok = isLombok(record), loan = resolveLoan(record), insentifValue = Number(record.insentif) || 0;
+      const m = record.metrics || {}, isSales = record.workerType === 'Sales HPZ', lombok = isLombok(record), loan = resolveLoan(record);
+      let insentifValue = Number(record.insentif) || 0;
+      if (record.workerName === 'Tri Maharani' && m.insentifOverride !== undefined) insentifValue = m.insentifOverride;
+      
       $('pdfWorkerName').textContent = record.workerName || '—';
       $('pdfPeriod').textContent = record.recordMonth ? new Date(`${record.recordMonth}-01`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '—';
       $('pdfKerajinanStatus').textContent = isSales ? 'N/A (commission based)' : (lombok ? 'N/A (Lombok — no punctuality bonus)' : (isKerajinanEligible(record) ? `Eligible (+${rupiah(BONUS_KERAJINAN)})` : 'Ineligible'));
@@ -331,16 +390,36 @@
       if (!isSales && !lombok && isKerajinanEligible(record)) earnings.push(['Bonus Kerajinan (Punctuality)', BONUS_KERAJINAN]);
 
       switch (record.workerType) {
-        case 'Admin GPS': earnings.push([`Bonus Penjualan GPS (${m.unitCount || 0} × ${rupiah(RATES.gpsUnit)})`, (m.unitCount || 0) * RATES.gpsUnit]); break;
-        case 'Sales HPZ': earnings.push([`Komisi Penjualan 1% (${rupiah(m.sales3Months || 0)})`, Math.round((m.sales3Months || 0) * RATES.salesCommission)]); break;
-        case 'Mekanik HPZ': earnings.push([`Komisi Instalasi 1% (${rupiah(m.instalasiHpzAmount || 0)})`, Math.round((m.instalasiHpzAmount || 0) * RATES.salesCommission)]); break;
-        case 'Mekanik GPS': earnings.push([`Bonus Pasang GPS (${m.pasangGpsUnits || 0} × ${rupiah(RATES.gpsInstall)})`, (m.pasangGpsUnits || 0) * RATES.gpsInstall], [`Bonus Cek GPS (${m.cekGpsUnits || 0} × ${rupiah(RATES.gpsCheck)})`, (m.cekGpsUnits || 0) * RATES.gpsCheck]); break;
-        case 'Mekanik CCTV': earnings.push([`Bonus Pasang CCTV (${m.pasangCctvUnits || 0} × ${rupiah(RATES.cctvInstall)})`, (m.pasangCctvUnits || 0) * RATES.cctvInstall], [`Bonus Servis CCTV (${m.servisCctvUnits || 0} × ${rupiah(RATES.cctvService)})`, (m.servisCctvUnits || 0) * RATES.cctvService]); break;
-        case 'Helper': earnings.push([`Bonus Pasang GPS (${m.pasangGpsUnits || 0} × ${rupiah(RATES.gpsInstall)})`, (m.pasangGpsUnits || 0) * RATES.gpsInstall], [`Bonus Cek GPS (${m.cekGpsUnits || 0} × ${rupiah(RATES.gpsCheck)})`, (m.cekGpsUnits || 0) * RATES.gpsCheck], ['Cleaning Service Allowance', Number(m.cleaningServiceAllowance ?? CLEANING_ALLOWANCE)]); break;
+        case 'Admin GPS': 
+          if (record.workerName !== 'Tri Maharani') earnings.push([`Bonus Penjualan GPS (${m.unitCount || 0} × ${rupiah(RATES.gpsUnit)})`, (m.unitCount || 0) * RATES.gpsUnit]); 
+          break;
+        case 'Sales HPZ': earnings.push([`Komisi Penjualan 1% (${rupiah(m.sales2MonthsAgo || 0)})`, Math.round((m.sales2MonthsAgo || 0) * RATES.salesCommission)]); break;
+        case 'Mekanik HPZ': 
+          if (record.workerName === 'Rohmad Imam Safii') earnings.push([`Komisi Instalasi 1% (${rupiah(m.instalasiHpzAmount || 0)})`, Math.round((m.instalasiHpzAmount || 0) * RATES.salesCommission)]); 
+          break;
+        case 'Mekanik GPS': 
+          const mgP = (m.pasangGpsUnits || 0) * RATES.gpsInstall; const mgC = (m.cekGpsUnits || 0) * RATES.gpsCheck;
+          earnings.push([`Bonus Pasang GPS (${m.pasangGpsUnits || 0} × ${rupiah(RATES.gpsInstall)})`, mgP], [`Bonus Cek GPS (${m.cekGpsUnits || 0} × ${rupiah(RATES.gpsCheck)})`, mgC]);
+          earnings.push(['<span style="font-weight:700;color:#059669;">Total Bonus Mekanik</span>', mgP + mgC]); 
+          break;
+        case 'Mekanik CCTV': 
+          const mcP = (m.pasangCctvUnits || 0) * RATES.cctvInstall; const mcC = (m.servisCctvUnits || 0) * RATES.cctvService;
+          earnings.push([`Bonus Pasang CCTV (${m.pasangCctvUnits || 0} × ${rupiah(RATES.cctvInstall)})`, mcP], [`Bonus Servis CCTV (${m.servisCctvUnits || 0} × ${rupiah(RATES.cctvService)})`, mcC]); 
+          earnings.push(['<span style="font-weight:700;color:#059669;">Total Bonus Mekanik</span>', mcP + mcC]); 
+          break;
+        case 'Helper': 
+          const hP = (m.pasangGpsUnits || 0) * RATES.gpsInstall; const hC = (m.cekGpsUnits || 0) * RATES.gpsCheck;
+          earnings.push([`Bonus Pasang GPS (${m.pasangGpsUnits || 0} × ${rupiah(RATES.gpsInstall)})`, hP], [`Bonus Cek GPS (${m.cekGpsUnits || 0} × ${rupiah(RATES.gpsCheck)})`, hC], ['Cleaning Service Allowance', Number(m.cleaningServiceAllowance ?? CLEANING_ALLOWANCE)]); 
+          earnings.push(['<span style="font-weight:700;color:#059669;">Total Bonus Mekanik</span>', hP + hC]); 
+          break;
       }
-      const totalEarnings = earnings.reduce((s, [, v]) => s + (Number(v) || 0), 0);
+      const totalEarnings = earnings.reduce((s, [, v]) => s + (Number(String(v).replace(/<[^>]*>?/gm, '')) || 0), 0);
       const eBody = $('pdfEarningsBody'); eBody.replaceChildren();
-      earnings.forEach(([label, val]) => { const tr = document.createElement('tr'); tr.innerHTML = `<td>${label}</td><td class="right">${rupiah(val)}</td>`; eBody.appendChild(tr); });
+      earnings.forEach(([label, val]) => { 
+          const tr = document.createElement('tr'); 
+          const displayVal = String(label).includes('Total Bonus') ? `<span style="font-weight:700;color:#059669;">${rupiah(val)}</span>` : rupiah(val);
+          tr.innerHTML = `<td>${label}</td><td class="right">${displayVal}</td>`; eBody.appendChild(tr); 
+      });
       const eSub = document.createElement('tr'); eSub.className = 'subtotal'; eSub.innerHTML = `<td>Total Earnings</td><td class="right">${rupiah(totalEarnings)}</td>`; eBody.appendChild(eSub);
 
       const deductions = [];
@@ -360,6 +439,7 @@
 
     const downloadBtn = $('downloadPdfBtn'), downloadText = $('downloadBtnText'), pdfStage = $('pdfStage'), pdfStatus = $('pdfStatus'), pdfTemplate = $('pdfTemplate');
     function nextFrame() { return new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); }
+    
     downloadBtn.addEventListener('click', async () => {
       if (!data) { toast('No payslip data to export.', 'error'); return; }
       if (typeof window.html2pdf !== 'function') { toast('PDF library failed to load. Check your connection.', 'error', 6000); return; }
@@ -369,7 +449,16 @@
         void pdfStage.offsetHeight; await nextFrame();
         const safeName = (data.workerName || 'Employee').replace(/[^a-zA-Z0-9]/g, '_');
         const safePeriod = (data.recordMonth || 'Period').replace(/[^a-zA-Z0-9]/g, '_');
-        await window.html2pdf().set({ margin: [0.4, 0.4, 0.4, 0.4], filename: `Slip_Gaji_${safeName}_${safePeriod}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, width: 794, windowWidth: 794 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: ['css', 'legacy'] } }).from(pdfTemplate).save();
+        
+        await window.html2pdf().set({ 
+            margin: [0.35, 0.35, 0.35, 0.35], 
+            filename: `Slip_Gaji_${safeName}_${safePeriod}.pdf`, 
+            image: { type: 'jpeg', quality: 0.98 }, 
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: 800 }, 
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['css', 'legacy'] } 
+        }).from(pdfTemplate).save();
+        
         toast('Payslip PDF downloaded.', 'success');
       } catch (err) { toast('Could not build the PDF.', 'error'); } 
       finally { pdfStage.classList.remove('is-open'); pdfStatus.classList.remove('is-open'); downloadBtn.disabled = false; downloadText.textContent = 'Download PDF'; }
@@ -393,31 +482,42 @@
     }
     async function deleteStaleWageDoc(oldName, newName) { if (oldName === newName) return; try { await deleteDoc(doc(db, 'default_wages', oldName)); } catch (err) {} }
 
-    const DEFAULT_ROSTER_FALLBACK = { "Admin GPS": ["Mei Dhea Cahya Ardika", "Ni Wayan Widiantari", "Tri Maharani"], "Finance GPS": ["Wahyuningsih"], "Finance HPZ": ["Christy Martika"], "Admin HPZ": ["Ni Luh Ayu Atmi Kamaratih", "Widya Nurliza", "Ni Luh Febriyanti", "Aldina Verbiana", "Afrilia Indriyani", "Ni Kadek Dwina Suryani Dewi"], "Team comm": ["Tio Atrik Herdiansyah"], "Sales HPZ": ["Richard Antonius", "Iwan Pratama"], "Gudang": ["Pande Gede Ngurah Dana", "Ashera Devi Swarna Vista", "Nadia Ayu Riskiyah Putri", "Ganna Sine Kustury Vegat"], "Driver": ["Hersi Arnantyo", "Wiraganda Pattiwaellapia"], "Mekanik HPZ": ["Rohmad Imam Safii", "Ahmad Ardy Firmansyah", "Candra Bayu Pratama", "Munhamir Amin Almadkur", "Efendi Zulsilhamdi"], "Mekanik GPS": ["Heri Hermansah", "Hauzi Alwi"], "Mekanik CCTV": ["Jackson M Bessie", "Stefanus Rofinus R C"], "Helper": ["Yoyok Ujianto"] };
+    const DEFAULT_ROSTER_FALLBACK = { "Admin GPS": ["Mei Dhea Cahya Ardika", "Tri Maharani"], "Finance GPS": [], "Admin VNS": ["Christy Martika"], "Admin HPZ": ["Ni Luh Ayu Atmi Kamaratih", "Widya Nurliza", "Ni Luh Febriyanti", "Aldina Verbiana", "Afrilia Indriyani", "Ni Kadek Dwina Suryani Dewi", "Wahyuningsih"], "Team comm": ["Tio Atrik Herdiansyah"], "Sales HPZ": ["Richard Antonius", "Iwan Pratama"], "Gudang": ["Pande Gede Ngurah Dana", "Ashera Devi Swarna Vista", "Nadia Ayu Riskiyah Putri", "Ganna Sine Kustury Vegat"], "Driver": ["Hersi Arnantyo", "Wiraganda Pattiwaellapia"], "Mekanik HPZ": ["Rohmad Imam Safii", "Ahmad Ardy Firmansyah", "Candra Bayu Pratama", "Munhamir Amin Almadkur", "Efendi Zulsilhamdi"], "Mekanik GPS": ["Heri Hermansah", "Hauzi Alwi"], "Mekanik CCTV": ["Jackson M Bessie", "Stefanus Rofinus R C"], "Helper": ["Yoyok Ujianto"] };
 
     editBtn.addEventListener('click', async () => {
       if (!data) return; editBtn.disabled = true;
       try {
-        // STRICTLY isolate historical record details to prevent overwriting ongoing configurations
         const recordSnap = data.id ? await getDoc(doc(db, 'payroll_records', data.id)) : null;
         if (recordSnap?.exists()) { data = { ...data, ...recordSnap.data(), id: data.id }; localStorage.setItem('selectedWorker', JSON.stringify(data)); }
       } catch (err) {} finally { editBtn.disabled = false; }
       populateEditForm(data); openModal();
     });
 
-    function renderEditMetrics(category, m = {}) {
+    function renderEditMetrics(category, workerName, m = {}) {
       let html = ''; const wrap = (label, inner) => `<div><label class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-warn">${label}</label>${inner}</div>`;
       const numberInput = (id, value) => `<input type="number" id="${id}" value="${value}" min="0" class="field font-mono" />`;
       const moneyInput = (id, value) => `<input type="text" id="${id}" value="${formatMoney(value)}" inputmode="numeric" class="field money-input font-mono" />`;
       switch (category) {
-        case 'Admin GPS': html = wrap('GPS Units Sold', numberInput('editUnitCount', m.unitCount || 0)); break;
-        case 'Sales HPZ': html = wrap('3-Month Sales Amount (IDR)', moneyInput('editSales3Months', m.sales3Months || 0)); break;
-        case 'Mekanik HPZ': html = wrap('Monthly Installation Sales (IDR)', moneyInput('editInstalasiHpzAmount', m.instalasiHpzAmount || 0)); break;
+        case 'Admin GPS': 
+          if (workerName === 'Tri Maharani') html = wrap('Insentif Khusus Tri Maharani (IDR)', moneyInput('editInsentifOverride', m.insentifOverride || 0));
+          else html = wrap('GPS Units Sold', numberInput('editUnitCount', m.unitCount || 0)); 
+          break;
+        case 'Sales HPZ': html = wrap('Total Penjualan 2 Bulan Lalu (IDR)', moneyInput('editSales2MonthsAgo', m.sales2MonthsAgo || 0)); break;
+        case 'Mekanik HPZ': 
+          if (workerName === 'Rohmad Imam Safii') html = wrap('Monthly Installation Sales (IDR)', moneyInput('editInstalasiHpzAmount', m.instalasiHpzAmount || 0)); 
+          break;
         case 'Mekanik GPS': case 'Helper': html = `<div class="grid grid-cols-2 gap-4">${wrap('Pasang GPS', numberInput('editPasangGpsUnits', m.pasangGpsUnits || 0))}${wrap('Cek GPS', numberInput('editCekGpsUnits', m.cekGpsUnits || 0))}</div>`; break;
         case 'Mekanik CCTV': html = `<div class="grid grid-cols-2 gap-4">${wrap('Pasang CCTV', numberInput('editPasangCctvUnits', m.pasangCctvUnits || 0))}${wrap('Servis CCTV', numberInput('editServisCctvUnits', m.servisCctvUnits || 0))}</div>`; break;
       } $('editDynamicMetrics').innerHTML = html;
     }
-    $('editWorkerCategory').addEventListener('change', (e) => { renderEditMetrics(e.target.value, {}); kerajinanWrap.classList.toggle('hidden', data.isLombok || e.target.value === 'Sales HPZ'); });
+    
+    $('editWorkerCategory').addEventListener('change', (e) => { 
+        renderEditMetrics(e.target.value, $('editWorkerName').value, {}); 
+        kerajinanWrap.classList.toggle('hidden', data.isLombok || e.target.value === 'Sales HPZ'); 
+    });
+    $('editWorkerName').addEventListener('input', (e) => {
+        renderEditMetrics($('editWorkerCategory').value, e.target.value.trim(), {});
+    });
 
     function populateEditForm(record) {
       $('editWorkerName').value = record.workerName || ''; $('editWorkerCategory').value = record.workerType || CATEGORIES[0]; $('editRecordMonth').value = record.recordMonth || '';
@@ -425,7 +525,8 @@
       $('editInsentif').value = formatMoney(record.insentif || 0); $('editPotonganKasbon').value = formatMoney(record.potonganKasbon || 0);
       $('editKasbonKantor').value = formatMoney(record.kasbonKantor || 0); $('editKasbonLama').value = formatMoney(record.kasbonLama || 0);
       $('editKerajinanBonus').value = record.hasKerajinanBonus ? 'true' : 'false';
-      kerajinanWrap.classList.toggle('hidden', isLombok(record) || record.workerType === 'Sales HPZ'); renderEditMetrics(record.workerType || CATEGORIES[0], record.metrics || {});
+      kerajinanWrap.classList.toggle('hidden', isLombok(record) || record.workerType === 'Sales HPZ'); 
+      renderEditMetrics(record.workerType || CATEGORIES[0], record.workerName, record.metrics || {});
     }
 
     editForm.addEventListener('submit', async (e) => {
@@ -439,10 +540,16 @@
       const newKerajinan = (lombokTarget || newWorkerCategory === 'Sales HPZ') ? false : ($('editKerajinanBonus').value === 'true');
       const newPotongan = newKasbonLama > 0 ? Math.min(rawPotongan, newKasbonLama) : 0;
       const newMetrics = { ...(data.metrics || {}) };
+      
       switch (newWorkerCategory) {
-        case 'Admin GPS': newMetrics.unitCount = Number($('editUnitCount')?.value || 0); break;
-        case 'Sales HPZ': newMetrics.sales3Months = parseMoney($('editSales3Months')?.value); break;
-        case 'Mekanik HPZ': newMetrics.instalasiHpzAmount = parseMoney($('editInstalasiHpzAmount')?.value); break;
+        case 'Admin GPS': 
+          if (newWorkerName === 'Tri Maharani') newMetrics.insentifOverride = parseMoney($('editInsentifOverride')?.value);
+          else newMetrics.unitCount = Number($('editUnitCount')?.value || 0); 
+          break;
+        case 'Sales HPZ': newMetrics.sales2MonthsAgo = parseMoney($('editSales2MonthsAgo')?.value); break;
+        case 'Mekanik HPZ': 
+          if (newWorkerName === 'Rohmad Imam Safii') newMetrics.instalasiHpzAmount = parseMoney($('editInstalasiHpzAmount')?.value); 
+          break;
         case 'Mekanik GPS': case 'Helper': newMetrics.pasangGpsUnits = Number($('editPasangGpsUnits')?.value || 0); newMetrics.cekGpsUnits = Number($('editCekGpsUnits')?.value || 0); if (newWorkerCategory === 'Helper') newMetrics.cleaningServiceAllowance = CLEANING_ALLOWANCE; break;
         case 'Mekanik CCTV': newMetrics.pasangCctvUnits = Number($('editPasangCctvUnits')?.value || 0); newMetrics.servisCctvUnits = Number($('editServisCctvUnits')?.value || 0); break;
       }
@@ -457,7 +564,6 @@
           kasbonLama: newKasbonLama, defaultGajiPokok: newGajiPokok, uangMakan: newUangMakan, insentif: newInsentif, metrics: newMetrics
         });
 
-        // Strictly isolate global identity updates from history edits
         if (oldName !== newWorkerName) {
           await migrateRosterIdentity(oldName, oldCat, newWorkerName, newWorkerCategory);
           const oldWageSnap = await getDoc(doc(db, 'default_wages', oldName));

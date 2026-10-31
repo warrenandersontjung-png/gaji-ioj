@@ -97,7 +97,7 @@
               <div>
                 <label for="kasbonKantorInput" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-danger">Kasbon Kantor · Current Month (IDR)</label>
                 <input type="text" id="kasbonKantorInput" value="0" inputmode="numeric" class="field money-input font-mono" />
-                <span class="mt-1.5 block text-[10px] text-dim">Auto-filled from the worker's saved configuration; adjust if required.</span>
+                <span class="mt-1.5 block text-[10px] text-dim">This resets to zero automatically for every new entry.</span>
               </div>
             </div>
             <div id="dynamicInputs" class="grid grid-cols-1 gap-5 rounded-xl border border-brand/25 bg-brand/5 p-5 md:grid-cols-2"></div>
@@ -112,7 +112,7 @@
         <button type="button" id="toggleLombokBtn" aria-expanded="false" aria-controls="lombokContent" class="group flex flex-1 items-center justify-between text-left">
           <div>
             <div class="flex items-center gap-3"><h2 class="text-base font-semibold tracking-wide text-warn">Lombok Workers — Data Entry</h2><span class="shrink-0 rounded-full border border-warn/40 bg-warn/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-warn">Owner Only</span></div>
-            <p class="mt-0.5 text-xs text-muted">Restricted payroll entry for Lombok-based team members. No punctuality bonus applies.</p>
+            <p class="mt-0.5 text-xs text-muted">Full payroll entry for Lombok team members including specific wage settings.</p>
           </div>
           <div class="mr-2 flex items-center gap-3"><span id="lombokToggleLabel" class="hidden text-[10px] font-semibold uppercase tracking-widest text-muted transition-colors group-hover:text-warn sm:inline">Expand</span><svg id="lombokChevron" class="h-5 w-5 -rotate-90 text-warn transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></div>
         </button>
@@ -125,11 +125,30 @@
               <div><span class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">Category</span><div id="lombokCategoryDisplay" class="field !cursor-not-allowed font-mono font-semibold !text-warn">—</div></div>
               <div><label for="lombokRecordMonth" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">Payroll Month Period</label><input type="month" id="lombokRecordMonth" required class="field font-mono" /></div>
             </div>
-            <div>
-              <label for="lombokKasbonKantorInput" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-danger">Kasbon Kantor · Current Month (IDR)</label>
-              <input type="text" id="lombokKasbonKantorInput" value="0" inputmode="numeric" class="field money-input font-mono" />
-              <span class="mt-1.5 block text-[10px] text-dim">Auto-filled from the worker's saved configuration; adjust if required.</span>
+            
+            <div class="grid grid-cols-1 gap-5 rounded-xl border border-line bg-inset/40 p-5 md:grid-cols-4">
+              <div>
+                <label for="lombokUangMakanInput" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-success">Uang Makan (IDR)</label>
+                <input type="text" id="lombokUangMakanInput" value="0" inputmode="numeric" class="field money-input font-mono" />
+              </div>
+              <div>
+                <label for="lombokInsentifInput" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-success">Insentif (IDR)</label>
+                <input type="text" id="lombokInsentifInput" value="0" inputmode="numeric" class="field money-input font-mono" />
+              </div>
+              <div>
+                <label for="lombokKasbonLamaInput" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-warn">Total Kasbon Lama</label>
+                <input type="text" id="lombokKasbonLamaInput" value="0" inputmode="numeric" class="field money-input font-mono" />
+              </div>
+              <div>
+                <label for="lombokPotonganKasbonInput" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-warn">Potongan Bulanan</label>
+                <input type="text" id="lombokPotonganKasbonInput" value="0" inputmode="numeric" class="field money-input font-mono" />
+              </div>
+              <div class="md:col-span-4">
+                <label for="lombokKasbonKantorInput" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-danger">Kasbon Kantor · Current Month (IDR)</label>
+                <input type="text" id="lombokKasbonKantorInput" value="0" inputmode="numeric" class="field money-input font-mono" />
+              </div>
             </div>
+            
             <div id="lombokDynamicInputs" class="grid grid-cols-1 gap-5 rounded-xl border border-warn/30 bg-warn/5 p-5 md:grid-cols-2"></div>
             <button type="submit" id="lombokSubmitBtn" class="btn btn-warn w-full">Submit Lombok Performance Record</button>
           </form>
@@ -197,7 +216,7 @@
           <table class="w-full text-left text-xs text-fg-soft">
             <thead class="border-b border-line bg-inset text-[10px] uppercase tracking-wider text-muted">
               <tr>
-                <th class="p-4 font-semibold">Employee</th><th class="p-4 font-semibold">Category</th><th class="p-4 font-semibold">Period</th><th class="p-4 font-semibold">Base Salary</th><th class="p-4 font-semibold">Meal</th><th class="p-4 font-semibold">Kerajinan</th><th class="p-4 font-semibold">Loan Deduction</th><th class="p-4 font-semibold">Kasbon Kantor</th><th class="p-4 font-semibold">Remaining Loan</th><th class="p-4 font-bold text-success">TOTAL WAGE</th><th class="p-4 font-semibold">Submitted By</th><th class="p-4 text-center font-semibold">Actions</th>
+                <th class="p-4 font-semibold">Employee</th><th class="p-4 font-semibold">Category</th><th class="p-4 font-semibold">Period</th><th class="p-4 font-semibold">Base Salary</th><th class="p-4 font-semibold">Meal</th><th class="p-4 font-semibold text-success">Insentif</th><th class="p-4 font-semibold">Kerajinan</th><th class="p-4 font-semibold">Loan Deduction</th><th class="p-4 font-semibold">Kasbon Kantor</th><th class="p-4 font-semibold">Remaining Loan</th><th class="p-4 font-bold text-success">TOTAL WAGE</th><th class="p-4 font-semibold">Submitted By</th><th class="p-4 text-center font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody id="payrollTableBody" class="divide-y divide-line/60 bg-panel/40"></tbody>

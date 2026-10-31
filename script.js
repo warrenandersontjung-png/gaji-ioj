@@ -20,7 +20,7 @@ const firebaseConfig = {
 const db = getFirestore(initializeApp(firebaseConfig));
 
 /* --------------------------------------------------------------- constants */
-const CATEGORIES = ["Admin GPS", "Finance GPS", "Finance HPZ", "Admin HPZ", "Team comm", "Sales HPZ", "Gudang", "Driver", "Mekanik HPZ", "Mekanik GPS", "Mekanik CCTV", "Helper"];
+const CATEGORIES = ["Admin GPS", "Finance GPS", "Admin VNS", "Admin HPZ", "Team comm", "Sales HPZ", "Gudang", "Driver", "Mekanik HPZ", "Mekanik GPS", "Mekanik CCTV", "Helper"];
 const BONUS_KERAJINAN    = 300_000;
 const CLEANING_ALLOWANCE = 1_000_000;
 const RATES = { gpsUnit: 5_000, gpsInstall: 25_000, gpsCheck: 15_000, cctvInstall: 25_000, cctvService: 15_000, salesCommission: 0.01 };
@@ -35,9 +35,10 @@ const LOMBOK_NAMES   = new Set(LOMBOK_WORKERS.map((w) => w.name));
 const LOMBOK_BY_NAME = new Map(LOMBOK_WORKERS.map((w) => [w.name, w.category]));
 
 const DEFAULT_ROSTER = {
-  "Admin GPS": ["Mei Dhea Cahya Ardika", "Ni Wayan Widiantari", "Tri Maharani"],
-  "Finance GPS": ["Wahyuningsih"], "Finance HPZ": ["Christy Martika"],
-  "Admin HPZ": ["Ni Luh Ayu Atmi Kamaratih", "Widya Nurliza", "Ni Luh Febriyanti", "Aldina Verbiana", "Afrilia Indriyani", "Ni Kadek Dwina Suryani Dewi"],
+  "Admin GPS": ["Mei Dhea Cahya Ardika", "Tri Maharani"],
+  "Finance GPS": [],
+  "Admin VNS": ["Christy Martika"],
+  "Admin HPZ": ["Ni Luh Ayu Atmi Kamaratih", "Widya Nurliza", "Ni Luh Febriyanti", "Aldina Verbiana", "Afrilia Indriyani", "Ni Kadek Dwina Suryani Dewi", "Wahyuningsih"],
   "Team comm": ["Tio Atrik Herdiansyah"], "Sales HPZ": ["Richard Antonius", "Iwan Pratama"],
   "Gudang": ["Pande Gede Ngurah Dana", "Ashera Devi Swarna Vista", "Nadia Ayu Riskiyah Putri", "Ganna Sine Kustury Vegat"],
   "Driver": ["Hersi Arnantyo", "Wiraganda Pattiwaellapia"],
@@ -149,12 +150,21 @@ const field = (id, label, { type = 'number', value = '0', money = false, min = '
 const lombokField = (id, label, { type = 'number', value = '0', money = false, min = '0' } = {}) => `<div><label for="${id}" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-warn">${label}</label><input type="${type}" id="${id}" value="${value}" ${type === 'number' ? `min="${min}"` : ''} inputmode="${money ? 'numeric' : 'decimal'}" class="field ${money ? 'money-input' : ''} font-mono" /></div>`;
 
 function renderDynamicInputs() {
-  const cat = workerTypeSelect.value; $('punctualityBlock').classList.toggle('hidden', cat === 'Sales HPZ');
+  const cat = workerTypeSelect.value; const w = workerSelect.value; 
+  $('punctualityBlock').classList.toggle('hidden', cat === 'Sales HPZ');
   let html = '';
   switch (cat) {
-    case 'Admin GPS': html = `<div class="md:col-span-2">${field('unitCount', 'Jumlah Penjualan Unit GPS')}</div>`; break;
-    case 'Sales HPZ': html = `<div class="md:col-span-2">${field('sales3Months', 'Total Penjualan 3 Bulan Terakhir (IDR)', { type: 'text', money: true })}</div>`; break;
-    case 'Mekanik HPZ': html = `<div class="md:col-span-2">${field('instalasiHpzAmount', 'Total Penjualan Instalasi HPZ Bulan Ini (IDR)', { type: 'text', money: true })}</div>`; break;
+    case 'Admin GPS': 
+      if (w === 'Tri Maharani') html = `<div class="md:col-span-2">${field('insentifOverride', 'Insentif Khusus Tri Maharani (IDR)', { type: 'text', money: true })}</div>`;
+      else html = `<div class="md:col-span-2">${field('unitCount', 'Jumlah Penjualan Unit GPS')}</div>`; 
+      break;
+    case 'Sales HPZ': 
+      html = `<div class="md:col-span-2">${field('sales2MonthsAgo', 'Total Penjualan 2 Bulan Lalu (IDR)', { type: 'text', money: true })}</div>`; 
+      break;
+    case 'Mekanik HPZ': 
+      if (w === 'Rohmad Imam Safii') html = `<div class="md:col-span-2">${field('instalasiHpzAmount', 'Total Penjualan Instalasi HPZ Bulan Ini (IDR)', { type: 'text', money: true })}</div>`;
+      else html = `<p class="md:col-span-2 text-xs italic text-muted">No installation commission assigned for this worker.</p>`;
+      break;
     case 'Mekanik GPS': case 'Helper': html = field('pasangGpsUnits', 'Jumlah Pasang GPS') + field('cekGpsUnits', 'Jumlah Cek Unit GPS'); break;
     case 'Mekanik CCTV': html = field('pasangCctvUnits', 'Jumlah Pasang CCTV') + field('servisCctvUnits', 'Jumlah Servis CCTV'); break;
     default: html = `<p class="md:col-span-2 text-xs italic text-muted">No variable metrics required for this role — standard wage components apply.</p>`;
@@ -166,9 +176,15 @@ function renderLombokDynamicInputs() {
   const w = $('lombokWorker').value; const cat = LOMBOK_BY_NAME.get(w) || ''; $('lombokCategoryDisplay').textContent = cat || '—';
   let html = ''; const f = (id, label, opts) => lombokField(`lombok_${id}`, label, opts);
   switch (cat) {
-    case 'Admin GPS': html = `<div class="md:col-span-2">${f('unitCount', 'Jumlah Penjualan Unit GPS')}</div>`; break;
-    case 'Sales HPZ': html = `<div class="md:col-span-2">${f('sales3Months', 'Total Penjualan 3 Bulan Terakhir (IDR)', { type: 'text', money: true })}</div>`; break;
-    case 'Mekanik HPZ': html = `<div class="md:col-span-2">${f('instalasiHpzAmount', 'Total Penjualan Instalasi HPZ Bulan Ini (IDR)', { type: 'text', money: true })}</div>`; break;
+    case 'Admin GPS': 
+      if (w === 'Tri Maharani') html = `<div class="md:col-span-2">${f('insentifOverride', 'Insentif Khusus Tri Maharani (IDR)', { type: 'text', money: true })}</div>`;
+      else html = `<div class="md:col-span-2">${f('unitCount', 'Jumlah Penjualan Unit GPS')}</div>`; 
+      break;
+    case 'Sales HPZ': html = `<div class="md:col-span-2">${f('sales2MonthsAgo', 'Total Penjualan 2 Bulan Lalu (IDR)', { type: 'text', money: true })}</div>`; break;
+    case 'Mekanik HPZ': 
+      if (w === 'Rohmad Imam Safii') html = `<div class="md:col-span-2">${f('instalasiHpzAmount', 'Total Penjualan Instalasi HPZ Bulan Ini (IDR)', { type: 'text', money: true })}</div>`;
+      else html = `<p class="md:col-span-2 text-xs italic text-muted">No installation commission assigned for this worker.</p>`;
+      break;
     case 'Mekanik GPS': case 'Helper': html = f('pasangGpsUnits', 'Jumlah Pasang GPS') + f('cekGpsUnits', 'Jumlah Cek Unit GPS'); break;
     case 'Mekanik CCTV': html = f('pasangCctvUnits', 'Jumlah Pasang CCTV') + f('servisCctvUnits', 'Jumlah Servis CCTV'); break;
     default: html = `<p class="md:col-span-2 text-xs italic text-muted">Select a Lombok worker to load their performance fields.</p>`;
@@ -215,21 +231,33 @@ function resolveLoan(record, settings = {}) {
   return { kasbonLama, potonganKasbon: finalPotongan, kasbonKantor, sisaKasbon: Math.max(0, kasbonLama - finalPotongan) };
 }
 function isKerajinanEligible(record) { if (LOMBOK_NAMES.has(record.workerName)) return false; return !!record.hasKerajinanBonus; }
+
 function calculateTotalWage(record, settings = {}) {
   const base = record.defaultGajiPokok !== undefined ? record.defaultGajiPokok : (settings.defaultGajiPokok || 0);
   const meal = record.uangMakan !== undefined ? record.uangMakan : (settings.uangMakan || 0);
-  const insentif = record.insentif !== undefined ? record.insentif : (settings.insentif || 0);
+  const m = record.metrics || {};
+  
+  let baseInsentif = record.insentif !== undefined ? record.insentif : (settings.insentif || 0);
+  if (record.workerName === 'Tri Maharani' && m.insentifOverride !== undefined) {
+    baseInsentif = m.insentifOverride;
+  }
+  
   const bonusKerajinan = isKerajinanEligible(record) ? BONUS_KERAJINAN : 0;
   const { potonganKasbon, kasbonKantor } = resolveLoan(record, settings);
-  const ded = potonganKasbon + kasbonKantor; const m = record.metrics || {};
+  const ded = potonganKasbon + kasbonKantor; 
+  
   switch (record.workerType) {
-    case 'Admin GPS': return base + meal + insentif + bonusKerajinan + (m.unitCount || 0) * RATES.gpsUnit - ded;
-    case 'Sales HPZ': return meal + (m.sales3Months || 0) * RATES.salesCommission - ded;
-    case 'Mekanik HPZ': return base + meal + insentif + bonusKerajinan + (m.instalasiHpzAmount || 0) * RATES.salesCommission - ded;
-    case 'Mekanik GPS': return base + meal + insentif + bonusKerajinan + (m.pasangGpsUnits || 0) * RATES.gpsInstall + (m.cekGpsUnits || 0) * RATES.gpsCheck - ded;
-    case 'Mekanik CCTV': return base + meal + insentif + bonusKerajinan + (m.pasangCctvUnits || 0) * RATES.cctvInstall + (m.servisCctvUnits || 0) * RATES.cctvService - ded;
-    case 'Helper': return base + meal + insentif + bonusKerajinan + (m.pasangGpsUnits || 0) * RATES.gpsInstall + (m.cekGpsUnits || 0) * RATES.gpsCheck + (m.cleaningServiceAllowance ?? CLEANING_ALLOWANCE) - ded;
-    default: return base + meal + insentif + bonusKerajinan - ded;
+    case 'Admin GPS': 
+      const gpsSalesBonus = (record.workerName === 'Tri Maharani') ? 0 : (m.unitCount || 0) * RATES.gpsUnit;
+      return base + meal + baseInsentif + bonusKerajinan + gpsSalesBonus - ded;
+    case 'Sales HPZ': return meal + (m.sales2MonthsAgo || 0) * RATES.salesCommission - ded;
+    case 'Mekanik HPZ': 
+      const instalasiBonus = (record.workerName === 'Rohmad Imam Safii') ? (m.instalasiHpzAmount || 0) * RATES.salesCommission : 0;
+      return base + meal + baseInsentif + bonusKerajinan + instalasiBonus - ded;
+    case 'Mekanik GPS': return base + meal + baseInsentif + bonusKerajinan + (m.pasangGpsUnits || 0) * RATES.gpsInstall + (m.cekGpsUnits || 0) * RATES.gpsCheck - ded;
+    case 'Mekanik CCTV': return base + meal + baseInsentif + bonusKerajinan + (m.pasangCctvUnits || 0) * RATES.cctvInstall + (m.servisCctvUnits || 0) * RATES.cctvService - ded;
+    case 'Helper': return base + meal + baseInsentif + bonusKerajinan + (m.pasangGpsUnits || 0) * RATES.gpsInstall + (m.cekGpsUnits || 0) * RATES.gpsCheck + (m.cleaningServiceAllowance ?? CLEANING_ALLOWANCE) - ded;
+    default: return base + meal + baseInsentif + bonusKerajinan - ded;
   }
 }
 
@@ -249,9 +277,14 @@ $('payrollForm').addEventListener('submit', async (e) => {
 
     const metrics = {};
     switch (category) {
-      case 'Admin GPS': metrics.unitCount = Number($('unitCount')?.value || 0); break;
-      case 'Sales HPZ': metrics.sales3Months = parseMoney($('sales3Months')?.value); break;
-      case 'Mekanik HPZ': metrics.instalasiHpzAmount = parseMoney($('instalasiHpzAmount')?.value); break;
+      case 'Admin GPS': 
+        if (workerName === 'Tri Maharani') metrics.insentifOverride = parseMoney($('insentifOverride')?.value);
+        else metrics.unitCount = Number($('unitCount')?.value || 0); 
+        break;
+      case 'Sales HPZ': metrics.sales2MonthsAgo = parseMoney($('sales2MonthsAgo')?.value); break;
+      case 'Mekanik HPZ': 
+        if (workerName === 'Rohmad Imam Safii') metrics.instalasiHpzAmount = parseMoney($('instalasiHpzAmount')?.value); 
+        break;
       case 'Mekanik GPS': metrics.pasangGpsUnits = Number($('pasangGpsUnits')?.value || 0); metrics.cekGpsUnits = Number($('cekGpsUnits')?.value || 0); break;
       case 'Mekanik CCTV': metrics.pasangCctvUnits = Number($('pasangCctvUnits')?.value || 0); metrics.servisCctvUnits = Number($('servisCctvUnits')?.value || 0); break;
       case 'Helper': metrics.pasangGpsUnits = Number($('pasangGpsUnits')?.value || 0); metrics.cekGpsUnits = Number($('cekGpsUnits')?.value || 0); metrics.cleaningServiceAllowance = CLEANING_ALLOWANCE; break;
@@ -294,27 +327,37 @@ $('lombokForm').addEventListener('submit', async (e) => {
 
     const metrics = {};
     switch (category) {
-      case 'Admin GPS': metrics.unitCount = Number($('lombok_unitCount')?.value || 0); break;
-      case 'Sales HPZ': metrics.sales3Months = parseMoney($('lombok_sales3Months')?.value); break;
-      case 'Mekanik HPZ': metrics.instalasiHpzAmount = parseMoney($('lombok_instalasiHpzAmount')?.value); break;
+      case 'Admin GPS': 
+        if (workerName === 'Tri Maharani') metrics.insentifOverride = parseMoney($('lombok_insentifOverride')?.value);
+        else metrics.unitCount = Number($('lombok_unitCount')?.value || 0); 
+        break;
+      case 'Sales HPZ': metrics.sales2MonthsAgo = parseMoney($('lombok_sales2MonthsAgo')?.value); break;
+      case 'Mekanik HPZ': 
+        if (workerName === 'Rohmad Imam Safii') metrics.instalasiHpzAmount = parseMoney($('lombok_instalasiHpzAmount')?.value); 
+        break;
       case 'Mekanik GPS': metrics.pasangGpsUnits = Number($('lombok_pasangGpsUnits')?.value || 0); metrics.cekGpsUnits = Number($('lombok_cekGpsUnits')?.value || 0); break;
       case 'Mekanik CCTV': metrics.pasangCctvUnits = Number($('lombok_pasangCctvUnits')?.value || 0); metrics.servisCctvUnits = Number($('lombok_servisCctvUnits')?.value || 0); break;
       case 'Helper': metrics.pasangGpsUnits = Number($('lombok_pasangGpsUnits')?.value || 0); metrics.cekGpsUnits = Number($('lombok_cekGpsUnits')?.value || 0); metrics.cleaningServiceAllowance = CLEANING_ALLOWANCE; break;
     }
 
     const cfg = state.wages[workerName] || {};
-    const kasbonLama = cfg.kasbonLama || 0, setting = cfg.potonganKasbon || 0;
-    const potongan = kasbonLama > 0 && setting > 0 ? Math.min(setting, kasbonLama) : 0;
-    const sisaKasbon = Math.max(0, kasbonLama - potongan);
+    const enteredUangMakan = parseMoney($('lombokUangMakanInput').value);
+    const enteredInsentif = parseMoney($('lombokInsentifInput').value);
+    const enteredKasbonLama = parseMoney($('lombokKasbonLamaInput').value);
+    const enteredPotongan = parseMoney($('lombokPotonganKasbonInput').value);
+    
+    const potongan = enteredKasbonLama > 0 && enteredPotongan > 0 ? Math.min(enteredPotongan, enteredKasbonLama) : 0;
+    const sisaKasbon = Math.max(0, enteredKasbonLama - potongan);
 
     await addDoc(collection(db, 'payroll_records'), {
       workerName, workerType: category, recordMonth: month,
       hasKerajinanBonus: false, isLombok: true, kasbonKantor: parseMoney($('lombokKasbonKantorInput').value),
-      potonganKasbon: potongan, kasbonLama, defaultGajiPokok: cfg.defaultGajiPokok || 0, uangMakan: cfg.uangMakan || 0,
-      insentif: cfg.insentif || 0, metrics, submittedBy: state.user || 'Admin', timestamp: serverTimestamp()
+      potonganKasbon: potongan, kasbonLama: enteredKasbonLama, defaultGajiPokok: cfg.defaultGajiPokok || 0, uangMakan: enteredUangMakan,
+      insentif: enteredInsentif, metrics, submittedBy: state.user || 'Admin', timestamp: serverTimestamp()
     });
 
     await setDoc(doc(db, 'default_wages', workerName), {
+      uangMakan: enteredUangMakan, insentif: enteredInsentif, potonganKasbon: enteredPotongan,
       kasbonLama: sisaKasbon, kasbonKantor: 0, updatedAt: serverTimestamp()
     }, { merge: true });
 
@@ -352,8 +395,17 @@ onSnapshot(collection(db, 'default_wages'), (snap) => {
   const map = {};
   snap.forEach((d) => { const x = d.data(); map[x.workerName] = { defaultGajiPokok: x.defaultGajiPokok || 0, insentif: x.insentif || 0, uangMakan: x.uangMakan || 0, kasbonLama: x.kasbonLama || 0, potonganKasbon: x.potonganKasbon || 0, kasbonKantor: x.kasbonKantor || 0 }; });
   state.wages = map;
-  if (workerSelect.value && map[workerSelect.value]) $('kasbonKantorInput').value = formatMoney(map[workerSelect.value].kasbonKantor);
-  if ($('lombokWorker').value && map[$('lombokWorker').value]) $('lombokKasbonKantorInput').value = formatMoney(map[$('lombokWorker').value].kasbonKantor);
+  
+  // Note: Standard form 'kasbonKantor' input purposely NOT auto-filled anymore to ensure reset every month
+  
+  if ($('lombokWorker').value && map[$('lombokWorker').value]) {
+      const cfg = map[$('lombokWorker').value];
+      $('lombokUangMakanInput').value = formatMoney(cfg.uangMakan || 0);
+      $('lombokInsentifInput').value = formatMoney(cfg.insentif || 0);
+      $('lombokKasbonLamaInput').value = formatMoney(cfg.kasbonLama || 0);
+      $('lombokPotonganKasbonInput').value = formatMoney(cfg.potonganKasbon || 0);
+      $('lombokKasbonKantorInput').value = '0';
+  }
   scheduleRender();
 }, (err) => {});
 
@@ -385,7 +437,7 @@ function renderPayrollTable() {
   else $('summarySubtext').textContent = period ? `Total net payroll commitment for ${monthLabel(period)}.` : 'Total net payroll commitment across all recorded periods.';
 
   if (filtered.length === 0) {
-    $('payrollTableBody').innerHTML = `<tr><td colspan="12" class="p-10 text-center text-xs text-dim">No matching financial records found.</td></tr>`;
+    $('payrollTableBody').innerHTML = `<tr><td colspan="13" class="p-10 text-center text-xs text-dim">No matching financial records found.</td></tr>`;
     $('payrollTableFooter').innerHTML = ''; $('grandTotalWageDisplay').textContent = 'Rp 0'; $('grandTotalRecordCount').textContent = '0 Submissions Included'; return;
   }
 
@@ -394,7 +446,7 @@ function renderPayrollTable() {
   const frag = document.createDocumentFragment(); let grandTotal = 0;
 
   for (const [monthYear, records] of groups) {
-    const head = document.createElement('tr'); head.className = 'border-y border-line bg-inset'; head.innerHTML = `<td colspan="12" class="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-brand">${monthYear} — ${records.length} submission${records.length === 1 ? '' : 's'}</td>`; frag.appendChild(head);
+    const head = document.createElement('tr'); head.className = 'border-y border-line bg-inset'; head.innerHTML = `<td colspan="13" class="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-brand">${monthYear} — ${records.length} submission${records.length === 1 ? '' : 's'}</td>`; frag.appendChild(head);
 
     for (const record of records) {
       const settings = state.wages[record.workerName] || {};
@@ -409,13 +461,18 @@ function renderPayrollTable() {
       const row = document.createElement('tr'); row.dataset.recordId = record.id; row.className = `group cursor-pointer border-b border-line/40 transition-colors hover:bg-brand/5 active:bg-brand/10${isLombokRec ? ' bg-warn/[0.03]' : ''}`;
       const effectiveGajiPokok = record.defaultGajiPokok !== undefined ? record.defaultGajiPokok : settings.defaultGajiPokok;
       const effectiveUangMakan = record.uangMakan !== undefined ? record.uangMakan : settings.uangMakan;
+      
+      let effectiveInsentif = record.insentif !== undefined ? record.insentif : settings.insentif;
+      if (record.workerName === 'Tri Maharani' && record.metrics?.insentifOverride !== undefined) {
+          effectiveInsentif = record.metrics.insentifOverride;
+      }
 
-      row.innerHTML = `<td class="p-4 font-medium text-fg transition-colors group-hover:text-brand">${record.workerName}${lombokBadge}</td><td class="p-4"><span class="rounded-lg border border-line bg-panel/70 px-2.5 py-1 text-[10px] font-semibold text-fg-soft">${record.workerType}</span></td><td class="p-4 font-mono text-[11px] text-brand">${monthShort(record.recordMonth)}</td><td class="p-4 font-mono ${effectiveGajiPokok ? 'font-semibold text-warn' : 'text-dim'}">${rupiah(effectiveGajiPokok || 0)}</td><td class="p-4 font-mono ${effectiveUangMakan ? 'font-semibold text-success' : 'text-dim'}">${rupiah(effectiveUangMakan || 0)}</td><td class="p-4">${kerajinanBadge}</td><td class="p-4 font-mono font-semibold text-danger">${rupiah(potonganKasbon)}</td><td class="p-4 font-mono font-semibold text-danger">${rupiah(kasbonKantor)}</td><td class="p-4 font-mono font-semibold text-warn">${rupiah(sisaKasbon)}</td><td class="p-4 bg-success/10 font-mono font-bold text-success">${rupiah(totalWage)}</td><td class="p-4 text-[10px] text-muted"><span class="font-medium text-fg-soft">${record.submittedBy || '—'}</span><br><span class="font-mono text-[9px] text-dim">${record.formattedDateTime || ''}</span></td>${actionCell}`;
+      row.innerHTML = `<td class="p-4 font-medium text-fg transition-colors group-hover:text-brand">${record.workerName}${lombokBadge}</td><td class="p-4"><span class="rounded-lg border border-line bg-panel/70 px-2.5 py-1 text-[10px] font-semibold text-fg-soft">${record.workerType}</span></td><td class="p-4 font-mono text-[11px] text-brand">${monthShort(record.recordMonth)}</td><td class="p-4 font-mono ${effectiveGajiPokok ? 'font-semibold text-warn' : 'text-dim'}">${rupiah(effectiveGajiPokok || 0)}</td><td class="p-4 font-mono ${effectiveUangMakan ? 'font-semibold text-success' : 'text-dim'}">${rupiah(effectiveUangMakan || 0)}</td><td class="p-4 font-mono font-semibold text-success">${rupiah(effectiveInsentif || 0)}</td><td class="p-4">${kerajinanBadge}</td><td class="p-4 font-mono font-semibold text-danger">${rupiah(potonganKasbon)}</td><td class="p-4 font-mono font-semibold text-danger">${rupiah(kasbonKantor)}</td><td class="p-4 font-mono font-semibold text-warn">${rupiah(sisaKasbon)}</td><td class="p-4 bg-success/10 font-mono font-bold text-success">${rupiah(totalWage)}</td><td class="p-4 text-[10px] text-muted"><span class="font-medium text-fg-soft">${record.submittedBy || '—'}</span><br><span class="font-mono text-[9px] text-dim">${record.formattedDateTime || ''}</span></td>${actionCell}`;
       frag.appendChild(row);
     }
   }
   $('payrollTableBody').replaceChildren(frag); $('grandTotalWageDisplay').textContent = rupiah(grandTotal); $('grandTotalRecordCount').textContent = `${filtered.length} Submission${filtered.length === 1 ? '' : 's'} Included`;
-  $('payrollTableFooter').innerHTML = `<tr class="bg-success/10 text-success"><td colspan="9" class="p-4 text-right text-[11px] font-extrabold uppercase tracking-wider">Grand Total Payroll Commitment</td><td class="p-4 font-mono text-sm font-extrabold text-success">${rupiah(grandTotal)}</td><td colspan="2" class="p-4 text-[10px] font-normal text-muted">${filtered.length} worker(s)</td></tr>`;
+  $('payrollTableFooter').innerHTML = `<tr class="bg-success/10 text-success"><td colspan="10" class="p-4 text-right text-[11px] font-extrabold uppercase tracking-wider">Grand Total Payroll Commitment</td><td class="p-4 font-mono text-sm font-extrabold text-success">${rupiah(grandTotal)}</td><td colspan="2" class="p-4 text-[10px] font-normal text-muted">${filtered.length} worker(s)</td></tr>`;
 }
 
 $('payrollTableBody').addEventListener('click', (e) => {
@@ -438,7 +495,6 @@ async function deletePayrollRecord(recordId, workerName, periodFormatted) {
     const rec = state.records.find((r) => r.id === recordId);
     await deleteDoc(doc(db, 'payroll_records', recordId));
     
-    // Automatically refund the active global loan balance if the deleted record contained a deduction
     if (rec && (rec.potonganKasbon > 0)) {
       const wageCfg = state.wages[workerName] || {};
       const currentLama = wageCfg.kasbonLama || 0;
@@ -502,6 +558,15 @@ async function removeWorkerFromRoster(cat, name) {
   updateWorkerOptions(); updateSettingsWorkerDropdown(); renderDynamicInputs(); populateLombokWorkerDropdown(); renderLombokDynamicInputs();
   try { const cached = JSON.parse(localStorage.getItem('payrollRoster')); if (cached && typeof cached === 'object') { state.roster = { ...structuredClone(DEFAULT_ROSTER), ...cached }; updateWorkerOptions(); updateSettingsWorkerDropdown(); } } catch (_) {}
   workerTypeSelect.addEventListener('change', () => { updateWorkerOptions(); renderDynamicInputs(); });
-  workerSelect.addEventListener('change', () => { const cfg = state.wages[workerSelect.value]; $('kasbonKantorInput').value = formatMoney(cfg?.kasbonKantor || 0); });
-  $('lombokWorker').addEventListener('change', () => { renderLombokDynamicInputs(); const cfg = state.wages[$('lombokWorker').value]; $('lombokKasbonKantorInput').value = formatMoney(cfg?.kasbonKantor || 0); });
+  workerSelect.addEventListener('change', () => { $('kasbonKantorInput').value = '0'; renderDynamicInputs(); });
+  
+  $('lombokWorker').addEventListener('change', () => { 
+    renderLombokDynamicInputs(); 
+    const cfg = state.wages[$('lombokWorker').value] || {}; 
+    $('lombokUangMakanInput').value = formatMoney(cfg.uangMakan || 0);
+    $('lombokInsentifInput').value = formatMoney(cfg.insentif || 0);
+    $('lombokKasbonLamaInput').value = formatMoney(cfg.kasbonLama || 0);
+    $('lombokPotonganKasbonInput').value = formatMoney(cfg.potonganKasbon || 0);
+    $('lombokKasbonKantorInput').value = '0'; 
+  });
 })();
