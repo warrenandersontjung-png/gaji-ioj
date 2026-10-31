@@ -181,7 +181,9 @@ $('exitSessionBtn').addEventListener('click', () => {
   $('ownerSection').classList.toggle('hidden', !state.isOwner);
   $('gajiPokokSettingsSection').classList.toggle('hidden', !state.isOwner);
   $('lombokFormSection').classList.toggle('hidden', !state.isOwner);
-  $('adminFormSection').classList.toggle('hidden', state.isOwner);
+  
+  // Everyone (including Thusen) gets the general Admin Form now
+  $('adminFormSection').classList.remove('hidden');
 })();
 
 /* ==========================================================================
@@ -282,6 +284,9 @@ function bindCollapsible(triggers, panel, chevron, labelEl, onToggle) {
 }
 
 bindCollapsible([$('toggleSettingsBtn')], $('settingsContent'), $('settingsChevron'), $('settingsToggleLabel'));
+bindCollapsible([$('toggleLombokBtn')], $('lombokContent'), $('lombokChevron'), $('lombokToggleLabel'));
+bindCollapsible([$('toggleAdminBtn')], $('adminContent'), $('adminChevron'), $('adminToggleLabel'));
+
 const tableCtl = bindCollapsible([$('toggleTableBtn'), $('toggleTableTitleArea')], $('tableContent'), $('tableChevron'), $('tableToggleLabel'), writeFilterState);
 
 const filterToolbar = $('filterToolbar');
@@ -431,7 +436,6 @@ on($('settingPotonganKasbon'), 'input', updateSisaKasbonLive);
    Wage maths
    ========================================================================== */
 function resolveLoan(record, settings = {}) {
-  // Use historical record value if it exists, otherwise fall back to settings.
   const kasbonLama = record.kasbonLama !== undefined ? record.kasbonLama : (settings.kasbonLama || 0);
   const rawDeduct  = record.potonganKasbon !== undefined ? record.potonganKasbon : (settings.potonganKasbon || 0);
   const kasbonKantor = record.kasbonKantor !== undefined ? record.kasbonKantor : (settings.kasbonKantor || 0);
@@ -453,7 +457,6 @@ function isKerajinanEligible(record) {
 }
 
 function calculateTotalWage(record, settings = {}) {
-  // Priority: Historical Snapshot in record > Live Settings
   const base     = record.defaultGajiPokok !== undefined ? record.defaultGajiPokok : (settings.defaultGajiPokok || 0);
   const meal     = record.uangMakan !== undefined ? record.uangMakan : (settings.uangMakan || 0);
   const insentif = record.insentif !== undefined ? record.insentif : (settings.insentif || 0);

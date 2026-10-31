@@ -35,7 +35,7 @@
     };
   </script>
 
-  <link rel="stylesheet" href="styles.css?v=5" />
+  <link rel="stylesheet" href="styles.css?v=6" />
 
   <style>
     :root {
@@ -84,11 +84,10 @@
 
   <div class="relative z-10 mx-auto max-w-6xl space-y-7">
 
-    <!-- HEADER -->
+    <!-- ══════════════ HEADER ══════════════ -->
     <header class="glass flex flex-col gap-4 rounded-2xl border border-line p-6 shadow-2xl sm:flex-row sm:items-center sm:justify-between">
       <div class="space-y-1">
-        <button type="button" id="exitSessionBtn"
-                class="group inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-brand transition-opacity hover:opacity-80">
+        <button type="button" id="exitSessionBtn" class="group inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-brand transition-opacity hover:opacity-80">
           <svg class="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
           </svg>
@@ -114,91 +113,111 @@
       </div>
     </header>
 
-    <!-- ADMIN DATA ENTRY -->
-    <section id="adminFormSection" class="glass glow-brand hidden rounded-2xl border border-line p-6 shadow-2xl sm:p-8">
-      <div class="mb-6 border-b border-line pb-4">
-        <h2 class="text-base font-semibold tracking-wide text-fg">Submit Performance Record</h2>
-        <p class="mt-0.5 text-xs text-muted">Record operational worker metrics and punctuality status for the month.</p>
+    <!-- ══════════════ GENERAL WORKERS · DATA ENTRY ══════════════ -->
+    <section id="adminFormSection" class="glass glow-brand hidden overflow-hidden rounded-2xl border border-line shadow-2xl">
+      <div class="flex items-center justify-between gap-4 p-6 transition-colors hover:bg-panel/40 sm:p-8">
+        <button type="button" id="toggleAdminBtn" aria-expanded="true" aria-controls="adminContent" class="group flex flex-1 items-center justify-between text-left">
+          <div>
+            <h2 class="text-base font-semibold tracking-wide text-fg">Submit General Performance Record</h2>
+            <p class="mt-0.5 text-xs text-muted">Record operational worker metrics and punctuality status for the month.</p>
+          </div>
+          <div class="mr-2 flex items-center gap-3">
+            <span id="adminToggleLabel" class="hidden text-[10px] font-semibold uppercase tracking-widest text-muted transition-colors group-hover:text-brand sm:inline">Minimise</span>
+            <svg id="adminChevron" class="h-5 w-5 text-brand transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+        </button>
       </div>
 
-      <form id="payrollForm" class="space-y-6" novalidate>
-        <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-          <div>
-            <label for="recordMonth" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">Payroll Month Period</label>
-            <input type="month" id="recordMonth" required class="field font-mono" />
-          </div>
-          <div>
-            <label for="workerType" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">Worker Category</label>
-            <select id="workerType" class="field"></select>
-          </div>
-          <div>
-            <label for="workerName" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">Worker Name</label>
-            <select id="workerName" required class="field"><option value="" disabled selected>Select Worker</option></select>
-          </div>
-        </div>
+      <div id="adminContent" class="collapsible border-t border-line">
+        <div class="p-6 sm:p-8">
+          <form id="payrollForm" class="space-y-6" novalidate>
+            <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+              <div>
+                <label for="recordMonth" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">Payroll Month Period</label>
+                <input type="month" id="recordMonth" required class="field font-mono" />
+              </div>
+              <div>
+                <label for="workerType" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">Worker Category</label>
+                <select id="workerType" class="field"></select>
+              </div>
+              <div>
+                <label for="workerName" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">Worker Name</label>
+                <select id="workerName" required class="field"><option value="" disabled selected>Select Worker</option></select>
+              </div>
+            </div>
 
-        <div id="punctualityBlock" class="grid grid-cols-1 gap-5 rounded-xl border border-line bg-inset/60 p-5 md:grid-cols-2">
-          <div>
-            <label for="hasKerajinanBonus" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">Bonus Kerajinan / Punctuality</label>
-            <select id="hasKerajinanBonus" required class="field">
-              <option value="true">Eligible (+Rp 300.000)</option>
-              <option value="false">Ineligible</option>
-            </select>
-          </div>
-          <div>
-            <label for="kasbonKantorInput" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-danger">Kasbon Kantor · Current Month (IDR)</label>
-            <input type="text" id="kasbonKantorInput" value="0" inputmode="numeric" class="field money-input font-mono" />
-            <span class="mt-1.5 block text-[10px] text-dim">Auto-filled from the worker's saved configuration; adjust if required.</span>
-          </div>
-        </div>
+            <div id="punctualityBlock" class="grid grid-cols-1 gap-5 rounded-xl border border-line bg-inset/60 p-5 md:grid-cols-2">
+              <div>
+                <label for="hasKerajinanBonus" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">Bonus Kerajinan / Punctuality</label>
+                <select id="hasKerajinanBonus" required class="field">
+                  <option value="true">Eligible (+Rp 300.000)</option>
+                  <option value="false">Ineligible</option>
+                </select>
+              </div>
+              <div>
+                <label for="kasbonKantorInput" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-danger">Kasbon Kantor · Current Month (IDR)</label>
+                <input type="text" id="kasbonKantorInput" value="0" inputmode="numeric" class="field money-input font-mono" />
+                <span class="mt-1.5 block text-[10px] text-dim">Auto-filled from the worker's saved configuration; adjust if required.</span>
+              </div>
+            </div>
 
-        <div id="dynamicInputs" class="grid grid-cols-1 gap-5 rounded-xl border border-brand/25 bg-brand/5 p-5 md:grid-cols-2"></div>
-        <button type="submit" id="submitPayrollBtn" class="btn btn-brand w-full">Calculate &amp; Synchronise Performance Record</button>
-      </form>
+            <div id="dynamicInputs" class="grid grid-cols-1 gap-5 rounded-xl border border-brand/25 bg-brand/5 p-5 md:grid-cols-2"></div>
+            <button type="submit" id="submitPayrollBtn" class="btn btn-brand w-full">Calculate &amp; Synchronise Performance Record</button>
+          </form>
+        </div>
+      </div>
     </section>
 
-    <!-- OWNER LOMBOK DATA ENTRY -->
+    <!-- ══════════════ OWNER · LOMBOK DATA ENTRY ══════════════ -->
     <section id="lombokFormSection" class="glass glow-warn hidden overflow-hidden rounded-2xl border border-warn/40 shadow-2xl">
-      <div class="border-b border-warn/20 p-6 sm:p-8">
-        <div class="flex flex-wrap items-start justify-between gap-3">
+      <div class="flex items-center justify-between gap-4 p-6 transition-colors hover:bg-panel/40 sm:p-8">
+        <button type="button" id="toggleLombokBtn" aria-expanded="false" aria-controls="lombokContent" class="group flex flex-1 items-center justify-between text-left">
           <div>
-            <h2 class="text-base font-semibold tracking-wide text-warn">Lombok Workers — Data Entry</h2>
+            <div class="flex items-center gap-3">
+              <h2 class="text-base font-semibold tracking-wide text-warn">Lombok Workers — Data Entry</h2>
+              <span class="shrink-0 rounded-full border border-warn/40 bg-warn/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-warn">Owner Only</span>
+            </div>
             <p class="mt-0.5 text-xs text-muted">Restricted payroll entry for Lombok-based team members. No punctuality bonus applies.</p>
           </div>
-          <span class="shrink-0 rounded-full border border-warn/40 bg-warn/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-warn">Owner Only</span>
-        </div>
+          <div class="mr-2 flex items-center gap-3">
+            <span id="lombokToggleLabel" class="hidden text-[10px] font-semibold uppercase tracking-widest text-muted transition-colors group-hover:text-warn sm:inline">Expand</span>
+            <svg id="lombokChevron" class="h-5 w-5 -rotate-90 text-warn transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+        </button>
       </div>
 
-      <div class="p-6 sm:p-8">
-        <form id="lombokForm" class="space-y-6" novalidate>
-          <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-            <div>
-              <label for="lombokWorker" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">Worker</label>
-              <select id="lombokWorker" required class="field"><option value="" disabled selected>Select Lombok Worker</option></select>
+      <div id="lombokContent" class="collapsible is-collapsed border-t border-warn/20">
+        <div class="p-6 sm:p-8">
+          <form id="lombokForm" class="space-y-6" novalidate>
+            <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+              <div>
+                <label for="lombokWorker" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">Worker</label>
+                <select id="lombokWorker" required class="field"><option value="" disabled selected>Select Lombok Worker</option></select>
+              </div>
+              <div>
+                <span class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">Category</span>
+                <div id="lombokCategoryDisplay" class="field !cursor-not-allowed font-mono font-semibold !text-warn">—</div>
+              </div>
+              <div>
+                <label for="lombokRecordMonth" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">Payroll Month Period</label>
+                <input type="month" id="lombokRecordMonth" required class="field font-mono" />
+              </div>
             </div>
-            <div>
-              <span class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">Category</span>
-              <div id="lombokCategoryDisplay" class="field !cursor-not-allowed font-mono font-semibold !text-warn">—</div>
-            </div>
-            <div>
-              <label for="lombokRecordMonth" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-fg-soft">Payroll Month Period</label>
-              <input type="month" id="lombokRecordMonth" required class="field font-mono" />
-            </div>
-          </div>
 
-          <div>
-            <label for="lombokKasbonKantorInput" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-danger">Kasbon Kantor · Current Month (IDR)</label>
-            <input type="text" id="lombokKasbonKantorInput" value="0" inputmode="numeric" class="field money-input font-mono" />
-            <span class="mt-1.5 block text-[10px] text-dim">Auto-filled from the worker's saved configuration; adjust if required.</span>
-          </div>
+            <div>
+              <label for="lombokKasbonKantorInput" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-danger">Kasbon Kantor · Current Month (IDR)</label>
+              <input type="text" id="lombokKasbonKantorInput" value="0" inputmode="numeric" class="field money-input font-mono" />
+              <span class="mt-1.5 block text-[10px] text-dim">Auto-filled from the worker's saved configuration; adjust if required.</span>
+            </div>
 
-          <div id="lombokDynamicInputs" class="grid grid-cols-1 gap-5 rounded-xl border border-warn/30 bg-warn/5 p-5 md:grid-cols-2"></div>
-          <button type="submit" id="lombokSubmitBtn" class="btn btn-warn w-full">Submit Lombok Performance Record</button>
-        </form>
+            <div id="lombokDynamicInputs" class="grid grid-cols-1 gap-5 rounded-xl border border-warn/30 bg-warn/5 p-5 md:grid-cols-2"></div>
+            <button type="submit" id="lombokSubmitBtn" class="btn btn-warn w-full">Submit Lombok Performance Record</button>
+          </form>
+        </div>
       </div>
     </section>
 
-    <!-- OWNER WAGE & LOAN SETTINGS -->
+    <!-- ══════════════ OWNER · WAGE & LOAN SETTINGS ══════════════ -->
     <section id="gajiPokokSettingsSection" class="glass glow-warn hidden overflow-hidden rounded-2xl border border-warn/30 shadow-2xl">
       <div class="flex items-center justify-between gap-4 p-6 transition-colors hover:bg-panel/40 sm:p-8">
         <button type="button" id="toggleSettingsBtn" aria-expanded="false" aria-controls="settingsContent" class="group flex flex-1 items-center justify-between text-left">
@@ -272,7 +291,7 @@
       </div>
     </section>
 
-    <!-- OWNER FINANCIAL OVERVIEW -->
+    <!-- ══════════════ OWNER · FINANCIAL OVERVIEW ══════════════ -->
     <section id="ownerSection" class="glass glow-success hidden overflow-hidden rounded-2xl border border-line shadow-2xl">
       <div class="flex flex-wrap items-center justify-between gap-4 p-6 transition-colors hover:bg-panel/40 sm:p-8">
         <button type="button" id="toggleTableTitleArea" class="flex-1 text-left">
@@ -360,7 +379,7 @@
 
   </div>
 
-  <!-- ROSTER MODAL -->
+  <!-- ══════════════ ROSTER MODAL ══════════════ -->
   <div id="workerRosterModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-base/80 p-4 backdrop-blur-md">
     <div class="glass max-h-[90vh] w-full max-w-lg space-y-6 overflow-y-auto rounded-2xl border border-warn/40 p-6 shadow-2xl">
       <div class="flex items-start justify-between border-b border-line pb-3">
