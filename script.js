@@ -151,7 +151,9 @@ const lombokField = (id, label, { type = 'number', value = '0', money = false, m
 
 function renderDynamicInputs() {
   const cat = workerTypeSelect.value; const w = workerSelect.value; 
-  $('punctualityBlock').classList.toggle('hidden', cat === 'Sales HPZ');
+  if ($('punctualityBlock')) {
+    $('punctualityBlock').classList.toggle('hidden', cat === 'Sales HPZ' && w === 'Richard Antonius');
+  }
   let html = '';
   switch (cat) {
     case 'Admin GPS': 
@@ -159,7 +161,11 @@ function renderDynamicInputs() {
       else html = `<div class="md:col-span-2">${field('unitCount', 'Jumlah Penjualan Unit GPS')}</div>`; 
       break;
     case 'Sales HPZ': 
-      html = `<div class="md:col-span-2">${field('sales2MonthsAgo', 'Total Penjualan 2 Bulan Lalu (IDR)', { type: 'text', money: true })}</div>`; 
+      if (w === 'Richard Antonius') {
+        html = `<div class="md:col-span-2">${field('sales2MonthsAgo', 'Total Penjualan 2 Bulan Lalu (IDR)', { type: 'text', money: true })}</div>`; 
+      } else {
+        html = `<p class="md:col-span-2 text-xs italic text-muted">Standard wage components apply for this worker.</p>`;
+      }
       break;
     case 'Mekanik HPZ': 
       if (w === 'Rohmad Imam Safii') html = `<div class="md:col-span-2">${field('instalasiHpzAmount', 'Total Penjualan Instalasi HPZ Bulan Ini (IDR)', { type: 'text', money: true })}</div>`;
@@ -180,7 +186,13 @@ function renderLombokDynamicInputs() {
       if (w === 'Tri Maharani') html = `<div class="md:col-span-2">${f('insentifOverride', 'Insentif Khusus Tri Maharani (IDR)', { type: 'text', money: true })}</div>`;
       else html = `<div class="md:col-span-2">${f('unitCount', 'Jumlah Penjualan Unit GPS')}</div>`; 
       break;
-    case 'Sales HPZ': html = `<div class="md:col-span-2">${f('sales2MonthsAgo', 'Total Penjualan 2 Bulan Lalu (IDR)', { type: 'text', money: true })}</div>`; break;
+    case 'Sales HPZ': 
+      if (w === 'Richard Antonius') {
+        html = `<div class="md:col-span-2">${f('sales2MonthsAgo', 'Total Penjualan 2 Bulan Lalu (IDR)', { type: 'text', money: true })}</div>`; 
+      } else {
+        html = `<p class="md:col-span-2 text-xs italic text-muted">Standard wage components apply.</p>`;
+      }
+      break;
     case 'Mekanik HPZ': 
       if (w === 'Rohmad Imam Safii') html = `<div class="md:col-span-2">${f('instalasiHpzAmount', 'Total Penjualan Instalasi HPZ Bulan Ini (IDR)', { type: 'text', money: true })}</div>`;
       else html = `<p class="md:col-span-2 text-xs italic text-muted">No installation commission assigned for this worker.</p>`;
@@ -230,7 +242,11 @@ function resolveLoan(record, settings = {}) {
   const finalPotongan = record.potonganKasbon !== undefined ? record.potonganKasbon : potongan;
   return { kasbonLama, potonganKasbon: finalPotongan, kasbonKantor, sisaKasbon: Math.max(0, kasbonLama - finalPotongan) };
 }
-function isKerajinanEligible(record) { if (LOMBOK_NAMES.has(record.workerName)) return false; return !!record.hasKerajinanBonus; }
+function isKerajinanEligible(record) { 
+  if (LOMBOK_NAMES.has(record.workerName)) return false; 
+  if (record.workerType === 'Sales HPZ' && record.workerName === 'Richard Antonius') return false;
+  return !!record.hasKerajinanBonus; 
+}
 
 function calculateTotalWage(record, settings = {}) {
   const base = record.defaultGajiPokok !== undefined ? record.defaultGajiPokok : (settings.defaultGajiPokok || 0);
@@ -250,7 +266,9 @@ function calculateTotalWage(record, settings = {}) {
     case 'Admin GPS': 
       const gpsSalesBonus = (record.workerName === 'Tri Maharani') ? 0 : (m.unitCount || 0) * RATES.gpsUnit;
       return base + meal + baseInsentif + bonusKerajinan + gpsSalesBonus - ded;
-    case 'Sales HPZ': return meal + (m.sales2MonthsAgo || 0) * RATES.salesCommission - ded;
+    case 'Sales HPZ': 
+      if (record.workerName === 'Richard Antonius') return meal + (m.sales2MonthsAgo || 0) * RATES.salesCommission - ded;
+      return base + meal + baseInsentif + bonusKerajinan - ded;
     case 'Mekanik HPZ': 
       const instalasiBonus = (record.workerName === 'Rohmad Imam Safii') ? (m.instalasiHpzAmount || 0) * RATES.salesCommission : 0;
       return base + meal + baseInsentif + bonusKerajinan + instalasiBonus - ded;
@@ -276,12 +294,16 @@ $('payrollForm').addEventListener('submit', async (e) => {
     if (!dupSnap.empty) { toast(`A record for "${workerName}" already exists for ${month}.`, 'error', 5000); return; }
 
     const metrics = {};
+    const isCommissionSales = category === 'Sales HPZ' && workerName === 'Richard Antonius';
+    
     switch (category) {
       case 'Admin GPS': 
         if (workerName === 'Tri Maharani') metrics.insentifOverride = parseMoney($('insentifOverride')?.value);
         else metrics.unitCount = Number($('unitCount')?.value || 0); 
         break;
-      case 'Sales HPZ': metrics.sales2MonthsAgo = parseMoney($('sales2MonthsAgo')?.value); break;
+      case 'Sales HPZ': 
+        if (isCommissionSales) metrics.sales2MonthsAgo = parseMoney($('sales2MonthsAgo')?.value); 
+        break;
       case 'Mekanik HPZ': 
         if (workerName === 'Rohmad Imam Safii') metrics.instalasiHpzAmount = parseMoney($('instalasiHpzAmount')?.value); 
         break;
@@ -297,7 +319,7 @@ $('payrollForm').addEventListener('submit', async (e) => {
 
     await addDoc(collection(db, 'payroll_records'), {
       workerName, workerType: category, recordMonth: month,
-      hasKerajinanBonus: category === 'Sales HPZ' ? false : $('hasKerajinanBonus').value === 'true',
+      hasKerajinanBonus: isCommissionSales ? false : $('hasKerajinanBonus').value === 'true',
       isLombok: false, kasbonKantor: parseMoney($('kasbonKantorInput').value), potonganKasbon: potongan, kasbonLama,
       defaultGajiPokok: cfg.defaultGajiPokok || 0, uangMakan: cfg.uangMakan || 0, insentif: cfg.insentif || 0,
       metrics, submittedBy: state.user || 'Admin', timestamp: serverTimestamp()
@@ -331,7 +353,9 @@ $('lombokForm').addEventListener('submit', async (e) => {
         if (workerName === 'Tri Maharani') metrics.insentifOverride = parseMoney($('lombok_insentifOverride')?.value);
         else metrics.unitCount = Number($('lombok_unitCount')?.value || 0); 
         break;
-      case 'Sales HPZ': metrics.sales2MonthsAgo = parseMoney($('lombok_sales2MonthsAgo')?.value); break;
+      case 'Sales HPZ': 
+        if (workerName === 'Richard Antonius') metrics.sales2MonthsAgo = parseMoney($('lombok_sales2MonthsAgo')?.value); 
+        break;
       case 'Mekanik HPZ': 
         if (workerName === 'Rohmad Imam Safii') metrics.instalasiHpzAmount = parseMoney($('lombok_instalasiHpzAmount')?.value); 
         break;
@@ -455,7 +479,7 @@ function renderPayrollTable() {
       const kerajinanBadge = isKerajinanEligible(record) ? `<span class="rounded-full border border-success/40 bg-success/10 px-2.5 py-0.5 text-[10px] font-semibold text-success">Yes</span>` : `<span class="rounded-full border border-danger/40 bg-danger/10 px-2.5 py-0.5 text-[10px] font-semibold text-danger">No</span>`;
       const lombokBadge = isLombokRec ? `<span class="ml-2 inline-block align-middle rounded border border-warn/50 bg-warn/15 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-warn">Lombok</span>` : '';
       
-      const actionCell = `<td class="p-4 text-center space-x-2 whitespace-nowrap">
+      const actionCell = `<td class="p-4 text-center space-x-2 whitespace-nowrap sticky right-0 backdrop-blur-md bg-base/90 border-l border-line shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.1)]">
         <button type="button" class="view-btn rounded-lg border border-brand/40 bg-brand/10 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-brand transition-all hover:bg-brand/25 active:scale-95" data-id="${record.id}" title="View Payslip">View</button>
         ${state.isOwner ? `<button type="button" class="delete-btn inline-block rounded-lg border border-danger/40 bg-danger/10 p-1.5 align-middle text-danger transition-all hover:bg-danger/25 active:scale-95" data-id="${record.id}" data-name="${record.workerName}" data-period="${monthShort(record.recordMonth)}" title="Delete submission"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>` : ''}
       </td>`;
@@ -564,8 +588,16 @@ async function removeWorkerFromRoster(cat, name) {
   if (preType && CATEGORIES.includes(preType)) { workerTypeSelect.value = preType; workerTypeSelect.disabled = true; workerTypeSelect.dataset.locked = 'true'; }
   updateWorkerOptions(); updateSettingsWorkerDropdown(); renderDynamicInputs(); populateLombokWorkerDropdown(); renderLombokDynamicInputs();
   try { const cached = JSON.parse(localStorage.getItem('payrollRoster')); if (cached && typeof cached === 'object') { state.roster = { ...structuredClone(DEFAULT_ROSTER), ...cached }; updateWorkerOptions(); updateSettingsWorkerDropdown(); } } catch (_) {}
-  workerTypeSelect.addEventListener('change', () => { updateWorkerOptions(); renderDynamicInputs(); });
-  workerSelect.addEventListener('change', () => { $('kasbonKantorInput').value = '0'; renderDynamicInputs(); });
+  
+  workerSelect.addEventListener('change', () => { 
+    $('kasbonKantorInput').value = '0'; 
+    renderDynamicInputs(); 
+  });
+  
+  workerTypeSelect.addEventListener('change', () => { 
+    updateWorkerOptions(); 
+    renderDynamicInputs(); 
+  });
   
   $('lombokWorker').addEventListener('change', () => { 
     renderLombokDynamicInputs(); 

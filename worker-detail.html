@@ -256,7 +256,11 @@
       return { kasbonLama, potonganKasbon: potongan, kasbonKantor: Math.max(0, Number(rec.kasbonKantor) || 0), sisaKasbon: Math.max(0, kasbonLama - potongan) };
     }
     function isLombok(rec) { return !!(rec?.isLombok || LOMBOK_NAMES.has(rec?.workerName)); }
-    function isKerajinanEligible(rec) { if (isLombok(rec)) return false; return !!rec.hasKerajinanBonus; }
+    function isKerajinanEligible(rec) { 
+      if (isLombok(rec)) return false; 
+      if (rec.workerType === 'Sales HPZ' && rec.workerName === 'Richard Antonius') return false;
+      return !!rec.hasKerajinanBonus; 
+    }
 
     function calculateTHP(rec, opts) {
       const { gajiPokok, uangMakan, insentif, potonganKasbon, kasbonKantor, kerajinanEligible, metrics } = opts;
@@ -266,7 +270,9 @@
         case 'Admin GPS': 
           const gpsBonus = (rec.workerName === 'Tri Maharani') ? 0 : (m.unitCount || 0) * RATES.gpsUnit;
           return gajiPokok + uangMakan + insentif + bonusKerajinan + gpsBonus - deductions;
-        case 'Sales HPZ': return uangMakan + (m.sales2MonthsAgo || 0) * RATES.salesCommission - deductions;
+        case 'Sales HPZ': 
+          if (rec.workerName === 'Richard Antonius') return uangMakan + (m.sales2MonthsAgo || 0) * RATES.salesCommission - deductions;
+          return gajiPokok + uangMakan + insentif + bonusKerajinan - deductions;
         case 'Mekanik HPZ': 
           const insBonus = (rec.workerName === 'Rohmad Imam Safii') ? (m.instalasiHpzAmount || 0) * RATES.salesCommission : 0;
           return gajiPokok + uangMakan + insentif + bonusKerajinan + insBonus - deductions;
@@ -279,20 +285,25 @@
 
     function renderPayslipView(record) {
       if (!record) return;
-      const lombok = isLombok(record), isSales = record.workerType === 'Sales HPZ';
+      const lombok = isLombok(record);
+      const isCommissionSales = record.workerType === 'Sales HPZ' && record.workerName === 'Richard Antonius';
+      
       $('workerNameDisplay').textContent = record.workerName || 'Employee'; $('workerTypeDisplay').textContent = `Category: ${record.workerType || 'Standard'}`;
       $('periodDisplay').textContent = record.recordMonth ? new Date(`${record.recordMonth}-01`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'N/A';
-      $('gajiPokokRow').classList.toggle('hidden', isSales); $('gajiPokokRow').classList.toggle('flex', !isSales);
-      if (!isSales) $('gajiPokokDisplay').textContent = rupiah(record.defaultGajiPokok || 0);
+      
+      $('gajiPokokRow').classList.toggle('hidden', isCommissionSales); 
+      $('gajiPokokRow').classList.toggle('flex', !isCommissionSales);
+      if (!isCommissionSales) $('gajiPokokDisplay').textContent = rupiah(record.defaultGajiPokok || 0);
       $('uangMakanDisplay').textContent = rupiah(record.uangMakan || 0);
 
       let insentifValue = Number(record.insentif) || 0;
       if (record.workerName === 'Tri Maharani' && record.metrics?.insentifOverride !== undefined) insentifValue = record.metrics.insentifOverride;
       
       const insentifRow = $('insentifRow');
-      if (!isSales && insentifValue > 0) { insentifRow.classList.remove('hidden'); insentifRow.classList.add('flex'); $('insentifDisplay').textContent = rupiah(insentifValue); } else { insentifRow.classList.add('hidden'); insentifRow.classList.remove('flex'); }
+      if (!isCommissionSales && insentifValue > 0) { insentifRow.classList.remove('hidden'); insentifRow.classList.add('flex'); $('insentifDisplay').textContent = rupiah(insentifValue); } else { insentifRow.classList.add('hidden'); insentifRow.classList.remove('flex'); }
 
-      const kerajinanRow = $('kerajinanRow'), kerajinanVisible = !isSales && !lombok;
+      const kerajinanRow = $('kerajinanRow');
+      const kerajinanVisible = !isCommissionSales && !lombok;
       kerajinanRow.classList.toggle('hidden', !kerajinanVisible); kerajinanRow.classList.toggle('flex', kerajinanVisible);
       if (kerajinanVisible) {
         const badge = $('kerajinanBadge');
@@ -318,7 +329,12 @@
           }
           break;
         case 'Sales HPZ': 
-          variableAmt = (m.sales2MonthsAgo || 0) * RATES.salesCommission; $('metricsText').textContent = `2-month ago sales: ${rupiah(m.sales2MonthsAgo || 0)} (1% commission)`; $('variableBonusLabel').textContent = 'Komisi Penjualan (1%)'; break;
+          if (record.workerName === 'Richard Antonius') {
+              variableAmt = (m.sales2MonthsAgo || 0) * RATES.salesCommission; $('metricsText').textContent = `2-month ago sales: ${rupiah(m.sales2MonthsAgo || 0)} (1% commission)`; $('variableBonusLabel').textContent = 'Komisi Penjualan (1%)'; 
+          } else {
+              metricsBox.classList.add('hidden'); varRow.classList.add('hidden'); varRow.classList.remove('flex');
+          }
+          break;
         case 'Mekanik HPZ': 
           if (record.workerName === 'Rohmad Imam Safii') {
               variableAmt = (m.instalasiHpzAmount || 0) * RATES.salesCommission; $('metricsText').textContent = `Monthly installation sales: ${rupiah(m.instalasiHpzAmount || 0)} (1% commission)`; $('variableBonusLabel').textContent = 'Komisi Instalasi HPZ (1%)';
@@ -372,28 +388,35 @@
     }
 
     function buildPdfContent(record) {
-      const m = record.metrics || {}, isSales = record.workerType === 'Sales HPZ', lombok = isLombok(record), loan = resolveLoan(record);
+      const m = record.metrics || {}, lombok = isLombok(record), loan = resolveLoan(record);
+      const isCommissionSales = record.workerType === 'Sales HPZ' && record.workerName === 'Richard Antonius';
+      
       let insentifValue = Number(record.insentif) || 0;
       if (record.workerName === 'Tri Maharani' && m.insentifOverride !== undefined) insentifValue = m.insentifOverride;
       
       $('pdfWorkerName').textContent = record.workerName || '—';
       $('pdfPeriod').textContent = record.recordMonth ? new Date(`${record.recordMonth}-01`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '—';
-      $('pdfKerajinanStatus').textContent = isSales ? 'N/A (commission based)' : (lombok ? 'N/A (Lombok — no punctuality bonus)' : (isKerajinanEligible(record) ? `Eligible (+${rupiah(BONUS_KERAJINAN)})` : 'Ineligible'));
+      
+      $('pdfKerajinanStatus').textContent = isCommissionSales ? 'N/A (commission based)' : (lombok ? 'N/A (Lombok — no punctuality bonus)' : (isKerajinanEligible(record) ? `Eligible (+${rupiah(BONUS_KERAJINAN)})` : 'Ineligible'));
       const issue = record.timestamp?.toDate ? record.timestamp.toDate() : (record.dateISO ? new Date(record.dateISO) : new Date());
       $('pdfIssueDate').textContent = issue.toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' });
       $('pdfFooterRef').textContent = `PAY-${(record.recordMonth || '').replace('-', '')}-${(record.workerName || 'X').replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase()}`;
 
       const earnings = [];
-      if (!isSales) earnings.push(['Gaji Pokok (Base Salary)', Number(record.defaultGajiPokok || 0)]);
+      if (!isCommissionSales) earnings.push(['Gaji Pokok (Base Salary)', Number(record.defaultGajiPokok || 0)]);
       earnings.push(['Uang Makan (Meal Allowance)', Number(record.uangMakan || 0)]);
-      if (!isSales && insentifValue > 0) earnings.push(['Insentif (Incentive)', insentifValue]);
-      if (!isSales && !lombok && isKerajinanEligible(record)) earnings.push(['Bonus Kerajinan (Punctuality)', BONUS_KERAJINAN]);
+      if (!isCommissionSales && insentifValue > 0) earnings.push(['Insentif (Incentive)', insentifValue]);
+      if (!isCommissionSales && !lombok && isKerajinanEligible(record)) earnings.push(['Bonus Kerajinan (Punctuality)', BONUS_KERAJINAN]);
 
       switch (record.workerType) {
         case 'Admin GPS': 
           if (record.workerName !== 'Tri Maharani') earnings.push([`Bonus Penjualan GPS (${m.unitCount || 0} × ${rupiah(RATES.gpsUnit)})`, (m.unitCount || 0) * RATES.gpsUnit]); 
           break;
-        case 'Sales HPZ': earnings.push([`Komisi Penjualan 1% (${rupiah(m.sales2MonthsAgo || 0)})`, Math.round((m.sales2MonthsAgo || 0) * RATES.salesCommission)]); break;
+        case 'Sales HPZ': 
+          if (record.workerName === 'Richard Antonius') {
+              earnings.push([`Komisi Penjualan 1% (${rupiah(m.sales2MonthsAgo || 0)})`, Math.round((m.sales2MonthsAgo || 0) * RATES.salesCommission)]); 
+          }
+          break;
         case 'Mekanik HPZ': 
           if (record.workerName === 'Rohmad Imam Safii') earnings.push([`Komisi Instalasi 1% (${rupiah(m.instalasiHpzAmount || 0)})`, Math.round((m.instalasiHpzAmount || 0) * RATES.salesCommission)]); 
           break;
@@ -502,7 +525,11 @@
           if (workerName === 'Tri Maharani') html = wrap('Insentif Khusus Tri Maharani (IDR)', moneyInput('editInsentifOverride', m.insentifOverride || 0));
           else html = wrap('GPS Units Sold', numberInput('editUnitCount', m.unitCount || 0)); 
           break;
-        case 'Sales HPZ': html = wrap('Total Penjualan 2 Bulan Lalu (IDR)', moneyInput('editSales2MonthsAgo', m.sales2MonthsAgo || 0)); break;
+        case 'Sales HPZ': 
+          if (workerName === 'Richard Antonius') {
+              html = wrap('Total Penjualan 2 Bulan Lalu (IDR)', moneyInput('editSales2MonthsAgo', m.sales2MonthsAgo || 0));
+          }
+          break;
         case 'Mekanik HPZ': 
           if (workerName === 'Rohmad Imam Safii') html = wrap('Monthly Installation Sales (IDR)', moneyInput('editInstalasiHpzAmount', m.instalasiHpzAmount || 0)); 
           break;
@@ -512,11 +539,14 @@
     }
     
     $('editWorkerCategory').addEventListener('change', (e) => { 
-        renderEditMetrics(e.target.value, $('editWorkerName').value, {}); 
-        kerajinanWrap.classList.toggle('hidden', data.isLombok || e.target.value === 'Sales HPZ'); 
+        renderEditMetrics(e.target.value, $('editWorkerName').value.trim(), {}); 
+        const isComm = e.target.value === 'Sales HPZ' && $('editWorkerName').value.trim() === 'Richard Antonius';
+        kerajinanWrap.classList.toggle('hidden', data.isLombok || isComm); 
     });
     $('editWorkerName').addEventListener('input', (e) => {
         renderEditMetrics($('editWorkerCategory').value, e.target.value.trim(), {});
+        const isComm = $('editWorkerCategory').value === 'Sales HPZ' && e.target.value.trim() === 'Richard Antonius';
+        kerajinanWrap.classList.toggle('hidden', data.isLombok || isComm); 
     });
 
     $('payrollTableBody')?.addEventListener('click', (e) => {
@@ -537,7 +567,9 @@
       $('editInsentif').value = formatMoney(record.insentif || 0); $('editPotonganKasbon').value = formatMoney(record.potonganKasbon || 0);
       $('editKasbonKantor').value = formatMoney(record.kasbonKantor || 0); $('editKasbonLama').value = formatMoney(record.kasbonLama || 0);
       $('editKerajinanBonus').value = record.hasKerajinanBonus ? 'true' : 'false';
-      kerajinanWrap.classList.toggle('hidden', isLombok(record) || record.workerType === 'Sales HPZ'); 
+      
+      const isComm = record.workerType === 'Sales HPZ' && record.workerName === 'Richard Antonius';
+      kerajinanWrap.classList.toggle('hidden', isLombok(record) || isComm); 
       renderEditMetrics(record.workerType || CATEGORIES[0], record.workerName, record.metrics || {});
     }
 
@@ -549,7 +581,10 @@
 
       const newGajiPokok = parseMoney($('editGajiPokok').value), newUangMakan = parseMoney($('editUangMakan').value), newInsentif = parseMoney($('editInsentif').value), rawPotongan = parseMoney($('editPotonganKasbon').value), newKasbonKantor = parseMoney($('editKasbonKantor').value), newKasbonLama = parseMoney($('editKasbonLama').value);
       const lombokTarget = data.isLombok || LOMBOK_NAMES.has(newWorkerName);
-      const newKerajinan = (lombokTarget || newWorkerCategory === 'Sales HPZ') ? false : ($('editKerajinanBonus').value === 'true');
+      
+      const isCommissionSales = newWorkerCategory === 'Sales HPZ' && newWorkerName === 'Richard Antonius';
+      const newKerajinan = (lombokTarget || isCommissionSales) ? false : ($('editKerajinanBonus').value === 'true');
+      
       const newPotongan = newKasbonLama > 0 ? Math.min(rawPotongan, newKasbonLama) : 0;
       const newMetrics = { ...(data.metrics || {}) };
       
@@ -558,7 +593,11 @@
           if (newWorkerName === 'Tri Maharani') newMetrics.insentifOverride = parseMoney($('editInsentifOverride')?.value);
           else newMetrics.unitCount = Number($('editUnitCount')?.value || 0); 
           break;
-        case 'Sales HPZ': newMetrics.sales2MonthsAgo = parseMoney($('editSales2MonthsAgo')?.value); break;
+        case 'Sales HPZ': 
+          if (newWorkerName === 'Richard Antonius') {
+              newMetrics.sales2MonthsAgo = parseMoney($('editSales2MonthsAgo')?.value);
+          }
+          break;
         case 'Mekanik HPZ': 
           if (newWorkerName === 'Rohmad Imam Safii') newMetrics.instalasiHpzAmount = parseMoney($('editInstalasiHpzAmount')?.value); 
           break;
