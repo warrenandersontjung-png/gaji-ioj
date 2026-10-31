@@ -143,15 +143,14 @@
     const $ = (id) => document.getElementById(id);
     const PASSCODES = { Christy: '098765', Ayu: '563412', Thusen: '281920' };
     const USER_CATEGORIES = {
-      Christy: ['Admin VNS'],
-      Ayu: ['Admin HPZ', 'Team comm', 'Sales HPZ', 'Gudang', 'Driver', 'Mekanik HPZ', 'Mekanik GPS', 'Helper', 'Finance HPZ']
+      Christy: ['Finance VNS'],
+      Ayu: ['Admin HPZ', 'Finance HPZ', 'Team comm', 'Sales HPZ', 'Gudang', 'Driver', 'Mekanik HPZ', 'Mekanik GPS', 'Helper']
     };
 
     const THEME_KEY = 'payrollTheme';
     function applyTheme(theme) {
       const light = theme === 'light'; document.documentElement.classList.toggle('light', light);
-      $('themeIconSun').classList.toggle('hidden', !light); $('themeIconMoon').classList.toggle('hidden', light);
-      $('themeModeText').textContent = light ? 'Light' : 'Dark';
+      $('themeIconSun').classList.toggle('hidden', !light); $('themeIconMoon').classList.toggle('hidden', light);$('themeModeText').textContent = light ? 'Light' : 'Dark';
     }
     applyTheme(document.documentElement.classList.contains('light') ? 'light' : 'dark');
 
@@ -166,8 +165,7 @@
     function goToDashboard(params) { window.location.href = `payroll.html?${new URLSearchParams(params)}`; }
 
     function showCategoryStep(user) {
-      $('loginForm').classList.add('hidden'); $('categoryForm').classList.remove('hidden');
-      $('authenticatedUserDisplay').textContent = `${user} · Admin`;
+      $('loginForm').classList.add('hidden'); $('categoryForm').classList.remove('hidden');$('authenticatedUserDisplay').textContent = `${user} · Admin`;
       $('portalSubtext').textContent = 'Select a worker category to start data entry.';
       const initialWorkerType = $('initialWorkerType');
       initialWorkerType.replaceChildren(new Option('— Select Category —', '', true, true));
@@ -186,19 +184,19 @@
 
     $('loginForm').addEventListener('submit', (e) => {
       e.preventDefault();
-      const user = $('loginUser').value; const pin = $('passcode').value;
+      const user = $('loginUser').value; const pin =$('passcode').value;
       if (user && PASSCODES[user] === pin) {
         $('loginError').classList.add('hidden'); activeUser = user;
         sessionStorage.setItem(SESSION_KEY, user); routeUser(user);
       } else {
-        $('loginError').classList.remove('hidden'); $('passcode').value = ''; $('passcode').focus();
+        $('loginError').classList.remove('hidden'); $('passcode').value = '';$('passcode').focus();
       }
     });
 
     $('logoutBtn').addEventListener('click', () => {
       sessionStorage.removeItem(SESSION_KEY); activeUser = null;
-      $('loginForm').reset(); $('categoryForm').classList.add('hidden'); $('loginForm').classList.remove('hidden');
-      $('portalSubtext').textContent = 'Please authenticate to access the system.'; $('loginUser').focus();
+      $('loginForm').reset(); $('categoryForm').classList.add('hidden');$('loginForm').classList.remove('hidden');
+      $('portalSubtext').textContent = 'Please authenticate to access the system.';$('loginUser').focus();
     });
 
     $('categoryForm').addEventListener('submit', (e) => {

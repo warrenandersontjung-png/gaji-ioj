@@ -20,7 +20,7 @@ const firebaseConfig = {
 const db = getFirestore(initializeApp(firebaseConfig));
 
 /* --------------------------------------------------------------- constants */
-const CATEGORIES = ["Admin GPS", "Finance GPS", "Admin VNS", "Admin HPZ", "Team comm", "Sales HPZ", "Gudang", "Driver", "Mekanik HPZ", "Mekanik GPS", "Mekanik CCTV", "Helper"];
+const CATEGORIES = ["Admin GPS", "Finance GPS", "Finance VNS", "Admin HPZ", "Finance HPZ", "Team comm", "Sales HPZ", "Gudang", "Driver", "Mekanik HPZ", "Mekanik GPS", "Mekanik CCTV", "Helper"];
 const BONUS_KERAJINAN    = 300_000;
 const CLEANING_ALLOWANCE = 1_000_000;
 const RATES = { gpsUnit: 5_000, gpsInstall: 25_000, gpsCheck: 15_000, cctvInstall: 25_000, cctvService: 15_000, salesCommission: 0.01 };
@@ -37,8 +37,9 @@ const LOMBOK_BY_NAME = new Map(LOMBOK_WORKERS.map((w) => [w.name, w.category]));
 const DEFAULT_ROSTER = {
   "Admin GPS": ["Mei Dhea Cahya Ardika", "Tri Maharani"],
   "Finance GPS": [],
-  "Admin VNS": ["Christy Martika"],
-  "Admin HPZ": ["Ni Luh Ayu Atmi Kamaratih", "Widya Nurliza", "Ni Luh Febriyanti", "Aldina Verbiana", "Afrilia Indriyani", "Ni Kadek Dwina Suryani Dewi", "Wahyuningsih"],
+  "Finance VNS": ["Christy Martika"],
+  "Admin HPZ": ["Ni Luh Ayu Atmi Kamaratih", "Widya Nurliza", "Ni Luh Febriyanti", "Aldina Verbiana", "Afrilia Indriyani", "Ni Kadek Dwina Suryani Dewi"],
+  "Finance HPZ": ["Wahyuningsih"],
   "Team comm": ["Tio Atrik Herdiansyah"], "Sales HPZ": ["Richard Antonius", "Iwan Pratama"],
   "Gudang": ["Pande Gede Ngurah Dana", "Ashera Devi Swarna Vista", "Nadia Ayu Riskiyah Putri", "Ganna Sine Kustury Vegat"],
   "Driver": ["Hersi Arnantyo", "Wiraganda Pattiwaellapia"],
@@ -395,8 +396,6 @@ onSnapshot(collection(db, 'default_wages'), (snap) => {
   const map = {};
   snap.forEach((d) => { const x = d.data(); map[x.workerName] = { defaultGajiPokok: x.defaultGajiPokok || 0, insentif: x.insentif || 0, uangMakan: x.uangMakan || 0, kasbonLama: x.kasbonLama || 0, potonganKasbon: x.potonganKasbon || 0, kasbonKantor: x.kasbonKantor || 0 }; });
   state.wages = map;
-  
-  // Note: Standard form 'kasbonKantor' input purposely NOT auto-filled anymore to ensure reset every month
   
   if ($('lombokWorker').value && map[$('lombokWorker').value]) {
       const cfg = map[$('lombokWorker').value];
