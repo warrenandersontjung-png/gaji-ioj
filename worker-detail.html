@@ -519,6 +519,18 @@
         renderEditMetrics($('editWorkerCategory').value, e.target.value.trim(), {});
     });
 
+    $('payrollTableBody')?.addEventListener('click', (e) => {
+      const deleteBtn = e.target.closest('.delete-btn');
+      if (deleteBtn) { e.stopPropagation(); deletePayrollRecord(deleteBtn.dataset.id, deleteBtn.dataset.name, deleteBtn.dataset.period); return; }
+      
+      const viewBtn = e.target.closest('.view-btn');
+      if (viewBtn) { 
+        e.stopPropagation(); 
+        const record = state.records.find((r) => r.id === viewBtn.dataset.id); 
+        if (record) openPayslip(record); 
+      }
+    });
+
     function populateEditForm(record) {
       $('editWorkerName').value = record.workerName || ''; $('editWorkerCategory').value = record.workerType || CATEGORIES[0]; $('editRecordMonth').value = record.recordMonth || '';
       $('editGajiPokok').value = formatMoney(record.defaultGajiPokok || 0); $('editUangMakan').value = formatMoney(record.uangMakan || 0);

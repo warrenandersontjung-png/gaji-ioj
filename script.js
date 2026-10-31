@@ -20,7 +20,7 @@ const firebaseConfig = {
 const db = getFirestore(initializeApp(firebaseConfig));
 
 /* --------------------------------------------------------------- constants */
-const CATEGORIES = ["Admin GPS", "Finance GPS", "Finance VNS", "Admin HPZ", "Finance HPZ", "Team comm", "Sales HPZ", "Gudang", "Driver", "Mekanik HPZ", "Mekanik GPS", "Mekanik CCTV", "Helper"];
+const CATEGORIES = ["Admin GPS", "Finance HPZ", "Finance VNS", "Admin HPZ", "Team comm", "Sales HPZ", "Gudang", "Driver", "Mekanik HPZ", "Mekanik GPS", "Mekanik CCTV", "Helper"];
 const BONUS_KERAJINAN    = 300_000;
 const CLEANING_ALLOWANCE = 1_000_000;
 const RATES = { gpsUnit: 5_000, gpsInstall: 25_000, gpsCheck: 15_000, cctvInstall: 25_000, cctvService: 15_000, salesCommission: 0.01 };
@@ -36,10 +36,9 @@ const LOMBOK_BY_NAME = new Map(LOMBOK_WORKERS.map((w) => [w.name, w.category]));
 
 const DEFAULT_ROSTER = {
   "Admin GPS": ["Mei Dhea Cahya Ardika", "Tri Maharani"],
-  "Finance GPS": [],
+  "Finance HPZ": ["Wahyuningsih"],
   "Finance VNS": ["Christy Martika"],
   "Admin HPZ": ["Ni Luh Ayu Atmi Kamaratih", "Widya Nurliza", "Ni Luh Febriyanti", "Aldina Verbiana", "Afrilia Indriyani", "Ni Kadek Dwina Suryani Dewi"],
-  "Finance HPZ": ["Wahyuningsih"],
   "Team comm": ["Tio Atrik Herdiansyah"], "Sales HPZ": ["Richard Antonius", "Iwan Pratama"],
   "Gudang": ["Pande Gede Ngurah Dana", "Ashera Devi Swarna Vista", "Nadia Ayu Riskiyah Putri", "Ganna Sine Kustury Vegat"],
   "Driver": ["Hersi Arnantyo", "Wiraganda Pattiwaellapia"],
@@ -455,9 +454,13 @@ function renderPayrollTable() {
       const isLombokRec = LOMBOK_NAMES.has(record.workerName);
       const kerajinanBadge = isKerajinanEligible(record) ? `<span class="rounded-full border border-success/40 bg-success/10 px-2.5 py-0.5 text-[10px] font-semibold text-success">Yes</span>` : `<span class="rounded-full border border-danger/40 bg-danger/10 px-2.5 py-0.5 text-[10px] font-semibold text-danger">No</span>`;
       const lombokBadge = isLombokRec ? `<span class="ml-2 inline-block align-middle rounded border border-warn/50 bg-warn/15 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-warn">Lombok</span>` : '';
-      const actionCell = state.isOwner ? `<td class="p-4 text-center"><button type="button" class="delete-btn rounded-lg border border-danger/40 bg-danger/10 p-1.5 text-danger transition-all hover:bg-danger/25 active:scale-95" data-id="${record.id}" data-name="${record.workerName}" data-period="${monthShort(record.recordMonth)}" title="Delete submission"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></td>` : `<td class="p-4 text-center text-[10px] italic text-dim">View only</td>`;
+      
+      const actionCell = `<td class="p-4 text-center space-x-2 whitespace-nowrap">
+        <button type="button" class="view-btn rounded-lg border border-brand/40 bg-brand/10 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-brand transition-all hover:bg-brand/25 active:scale-95" data-id="${record.id}" title="View Payslip">View</button>
+        ${state.isOwner ? `<button type="button" class="delete-btn inline-block rounded-lg border border-danger/40 bg-danger/10 p-1.5 align-middle text-danger transition-all hover:bg-danger/25 active:scale-95" data-id="${record.id}" data-name="${record.workerName}" data-period="${monthShort(record.recordMonth)}" title="Delete submission"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>` : ''}
+      </td>`;
 
-      const row = document.createElement('tr'); row.dataset.recordId = record.id; row.className = `group cursor-pointer border-b border-line/40 transition-colors hover:bg-brand/5 active:bg-brand/10${isLombokRec ? ' bg-warn/[0.03]' : ''}`;
+      const row = document.createElement('tr'); row.dataset.recordId = record.id; row.className = `group border-b border-line/40 transition-colors hover:bg-panel/40${isLombokRec ? ' bg-warn/[0.03]' : ''}`;
       const effectiveGajiPokok = record.defaultGajiPokok !== undefined ? record.defaultGajiPokok : settings.defaultGajiPokok;
       const effectiveUangMakan = record.uangMakan !== undefined ? record.uangMakan : settings.uangMakan;
       
@@ -477,8 +480,13 @@ function renderPayrollTable() {
 $('payrollTableBody').addEventListener('click', (e) => {
   const deleteBtn = e.target.closest('.delete-btn');
   if (deleteBtn) { e.stopPropagation(); deletePayrollRecord(deleteBtn.dataset.id, deleteBtn.dataset.name, deleteBtn.dataset.period); return; }
-  const row = e.target.closest('tr[data-record-id]'); if (!row) return;
-  const record = state.records.find((r) => r.id === row.dataset.recordId); if (!record) return; openPayslip(record);
+  
+  const viewBtn = e.target.closest('.view-btn');
+  if (viewBtn) { 
+    e.stopPropagation(); 
+    const record = state.records.find((r) => r.id === viewBtn.dataset.id); 
+    if (record) openPayslip(record); 
+  }
 });
 
 function openPayslip(record) {
