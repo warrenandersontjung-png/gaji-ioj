@@ -60,10 +60,17 @@
     
     #pdfTemplate { width: 794px; margin: 0; padding: 48px; box-sizing: border-box; background: #ffffff !important; color: #111827; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11px; line-height: 1.45; }
     #pdfTemplate * { box-sizing: border-box; }
+    
+    /* Document Title Block */
+    #pdfTemplate .pdf-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #1e3a8a; }
+    #pdfTemplate .pdf-header .super { font-size: 10px; font-weight: 800; color: #6b7280; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+    #pdfTemplate .pdf-header h1 { font-size: 28px; font-weight: 900; color: #111827; margin: 0; letter-spacing: -0.5px; line-height: 1.1; }
+
     #pdfTemplate table.meta { width: 100%; border-collapse: collapse; margin-bottom: 26px; padding-bottom: 18px; border-bottom: 1px solid #d1d5db; }
     #pdfTemplate table.meta td { padding: 5px 0; vertical-align: top; font-size: 10.5px; width: 25%; }
     #pdfTemplate table.meta td.label { padding-top: 7px; font-size: 9px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .6px; }
     #pdfTemplate table.meta td.value { font-weight: 600; color: #111827; }
+    
     #pdfTemplate .section-title { margin: 0 0 8px; padding-bottom: 4px; border-bottom: 1.5px solid #1e3a8a; font-size: 10px; font-weight: 800; color: #1e3a8a; text-transform: uppercase; letter-spacing: 1.2px; }
     #pdfTemplate .section-title.spaced { margin-top: 24px; }
     #pdfTemplate table.breakdown { width: 100%; border-collapse: collapse; font-size: 10.5px; table-layout: fixed; }
@@ -153,8 +160,16 @@
 
   <div id="pdfStage" aria-hidden="true">
     <div id="pdfTemplate">
+      
+      <!-- New Dedicated Document Title Block -->
+      <div class="pdf-header">
+        <div class="super">Payslip / Slip Gaji</div>
+        <h1 id="pdfWorkerName">—</h1>
+      </div>
+
       <table class="meta">
-        <tr><td class="label">Employee</td><td class="value" id="pdfWorkerName">—</td><td class="label">Payroll Period</td><td class="value" id="pdfPeriod">—</td></tr>
+        <!-- Replaced Employee cell with Category -->
+        <tr><td class="label">Category</td><td class="value" id="pdfWorkerCategory">—</td><td class="label">Payroll Period</td><td class="value" id="pdfPeriod">—</td></tr>
         <tr><td class="label">Punctuality</td><td class="value" id="pdfKerajinanStatus">—</td><td class="label">Issue Date</td><td class="value" id="pdfIssueDate">—</td></tr>
       </table>
       <div class="section-title">Earnings / Penghasilan</div>
@@ -397,6 +412,7 @@
       if (record.workerName === 'Tri Maharani' && m.insentifOverride !== undefined) insentifValue = m.insentifOverride;
       
       $('pdfWorkerName').textContent = record.workerName || '—';
+      $('pdfWorkerCategory').textContent = record.workerType || '—';
       $('pdfPeriod').textContent = record.recordMonth ? new Date(`${record.recordMonth}-01`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '—';
       
       $('pdfKerajinanStatus').textContent = isCommissionSales ? 'N/A (commission based)' : (lombok ? 'N/A (Lombok — no punctuality bonus)' : (isKerajinanEligible(record) ? `Eligible (+${rupiah(BONUS_KERAJINAN)})` : 'Ineligible'));
