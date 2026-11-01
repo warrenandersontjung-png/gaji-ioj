@@ -146,8 +146,8 @@ if (filterToolbar && $('toggleFilterBtn')) {
 }
 
 const workerTypeSelect = $('workerType'); const workerSelect = $('workerName');
-const field = (id, label, { type = 'number', value = '0', money = false, min = '0' } = {}) => `<div><label for="${id}" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-brand">${label}</label><input type="${type}" id="${id}" value="${value}" ${type === 'number' ? `min="${min}"` : ''} inputmode="${money ? 'numeric' : 'decimal'}" class="field ${money ? 'money-input' : ''} font-mono" /></div>`;
-const lombokField = (id, label, { type = 'number', value = '0', money = false, min = '0' } = {}) => `<div><label for="${id}" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-warn">${label}</label><input type="${type}" id="${id}" value="${value}" ${type === 'number' ? `min="${min}"` : ''} inputmode="${money ? 'numeric' : 'decimal'}" class="field ${money ? 'money-input' : ''} font-mono" /></div>`;
+const field = (id, label, { type = 'number', value = '0', money = false, min = '0', placeholder = '' } = {}) => `<div><label for="${id}" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-brand">${label}</label><input type="${type}" id="${id}" value="${value}" ${type === 'number' ? `min="${min}"` : ''} inputmode="${money ? 'numeric' : 'decimal'}" class="field ${money ? 'money-input' : ''} font-mono" placeholder="${placeholder}" /></div>`;
+const lombokField = (id, label, { type = 'number', value = '0', money = false, min = '0', placeholder = '' } = {}) => `<div><label for="${id}" class="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-warn">${label}</label><input type="${type}" id="${id}" value="${value}" ${type === 'number' ? `min="${min}"` : ''} inputmode="${money ? 'numeric' : 'decimal'}" class="field ${money ? 'money-input' : ''} font-mono" placeholder="${placeholder}" /></div>`;
 
 function renderDynamicInputs() {
   const cat = workerTypeSelect.value; const w = workerSelect.value; 
@@ -157,18 +157,18 @@ function renderDynamicInputs() {
   let html = '';
   switch (cat) {
     case 'Admin GPS': 
-      if (w === 'Tri Maharani') html = `<div class="md:col-span-2">${field('insentifOverride', 'Insentif Khusus Tri Maharani (IDR)', { type: 'text', money: true })}</div>`;
+      if (w === 'Tri Maharani') html = `<div class="md:col-span-2">${field('insentifOverride', 'Insentif Khusus Tri Maharani (IDR)', { type: 'text', value: '', money: true, placeholder: 'Leave blank for base wage' })}</div>`;
       else html = `<div class="md:col-span-2">${field('unitCount', 'Jumlah Penjualan Unit GPS')}</div>`; 
       break;
     case 'Sales HPZ': 
       if (w === 'Richard Antonius') {
-        html = `<div class="md:col-span-2">${field('sales2MonthsAgo', 'Total Penjualan 2 Bulan Lalu (IDR)', { type: 'text', money: true })}</div>`; 
+        html = `<div class="md:col-span-2">${field('sales2MonthsAgo', 'Total Penjualan 2 Bulan Lalu (IDR)', { type: 'text', value: '', money: true, placeholder: 'Optional...' })}</div>`; 
       } else {
         html = `<p class="md:col-span-2 text-xs italic text-muted">Standard wage components apply for this worker.</p>`;
       }
       break;
     case 'Mekanik HPZ': 
-      if (w === 'Rohmad Imam Safii') html = `<div class="md:col-span-2">${field('instalasiHpzAmount', 'Total Penjualan Instalasi HPZ Bulan Ini (IDR)', { type: 'text', money: true })}</div>`;
+      if (w === 'Rohmad Imam Safii') html = `<div class="md:col-span-2">${field('instalasiHpzAmount', 'Total Penjualan Instalasi HPZ Bulan Ini (IDR)', { type: 'text', value: '', money: true, placeholder: 'Optional...' })}</div>`;
       else html = `<p class="md:col-span-2 text-xs italic text-muted">No installation commission assigned for this worker.</p>`;
       break;
     case 'Mekanik GPS': case 'Helper': html = field('pasangGpsUnits', 'Jumlah Pasang GPS') + field('cekGpsUnits', 'Jumlah Cek Unit GPS'); break;
@@ -183,18 +183,18 @@ function renderLombokDynamicInputs() {
   let html = ''; const f = (id, label, opts) => lombokField(`lombok_${id}`, label, opts);
   switch (cat) {
     case 'Admin GPS': 
-      if (w === 'Tri Maharani') html = `<div class="md:col-span-2">${f('insentifOverride', 'Insentif Khusus Tri Maharani (IDR)', { type: 'text', money: true })}</div>`;
+      if (w === 'Tri Maharani') html = `<div class="md:col-span-2">${f('insentifOverride', 'Insentif Khusus Tri Maharani (IDR)', { type: 'text', value: '', money: true, placeholder: 'Leave blank for base wage' })}</div>`;
       else html = `<div class="md:col-span-2">${f('unitCount', 'Jumlah Penjualan Unit GPS')}</div>`; 
       break;
     case 'Sales HPZ': 
       if (w === 'Richard Antonius') {
-        html = `<div class="md:col-span-2">${f('sales2MonthsAgo', 'Total Penjualan 2 Bulan Lalu (IDR)', { type: 'text', money: true })}</div>`; 
+        html = `<div class="md:col-span-2">${f('sales2MonthsAgo', 'Total Penjualan 2 Bulan Lalu (IDR)', { type: 'text', value: '', money: true, placeholder: 'Optional...' })}</div>`; 
       } else {
         html = `<p class="md:col-span-2 text-xs italic text-muted">Standard wage components apply.</p>`;
       }
       break;
     case 'Mekanik HPZ': 
-      if (w === 'Rohmad Imam Safii') html = `<div class="md:col-span-2">${f('instalasiHpzAmount', 'Total Penjualan Instalasi HPZ Bulan Ini (IDR)', { type: 'text', money: true })}</div>`;
+      if (w === 'Rohmad Imam Safii') html = `<div class="md:col-span-2">${f('instalasiHpzAmount', 'Total Penjualan Instalasi HPZ Bulan Ini (IDR)', { type: 'text', value: '', money: true, placeholder: 'Optional...' })}</div>`;
       else html = `<p class="md:col-span-2 text-xs italic text-muted">No installation commission assigned for this worker.</p>`;
       break;
     case 'Mekanik GPS': case 'Helper': html = f('pasangGpsUnits', 'Jumlah Pasang GPS') + f('cekGpsUnits', 'Jumlah Cek Unit GPS'); break;
@@ -298,14 +298,24 @@ $('payrollForm').addEventListener('submit', async (e) => {
     
     switch (category) {
       case 'Admin GPS': 
-        if (workerName === 'Tri Maharani') metrics.insentifOverride = parseMoney($('insentifOverride')?.value);
-        else metrics.unitCount = Number($('unitCount')?.value || 0); 
+        if (workerName === 'Tri Maharani') {
+          const overrideVal = $('insentifOverride')?.value;
+          if (overrideVal && overrideVal.trim() !== '') metrics.insentifOverride = parseMoney(overrideVal);
+        } else {
+          metrics.unitCount = Number($('unitCount')?.value || 0); 
+        }
         break;
       case 'Sales HPZ': 
-        if (isCommissionSales) metrics.sales2MonthsAgo = parseMoney($('sales2MonthsAgo')?.value); 
+        if (isCommissionSales) {
+          const salesVal = $('sales2MonthsAgo')?.value;
+          if (salesVal && salesVal.trim() !== '') metrics.sales2MonthsAgo = parseMoney(salesVal);
+        }
         break;
       case 'Mekanik HPZ': 
-        if (workerName === 'Rohmad Imam Safii') metrics.instalasiHpzAmount = parseMoney($('instalasiHpzAmount')?.value); 
+        if (workerName === 'Rohmad Imam Safii') {
+          const instVal = $('instalasiHpzAmount')?.value;
+          if (instVal && instVal.trim() !== '') metrics.instalasiHpzAmount = parseMoney(instVal);
+        }
         break;
       case 'Mekanik GPS': metrics.pasangGpsUnits = Number($('pasangGpsUnits')?.value || 0); metrics.cekGpsUnits = Number($('cekGpsUnits')?.value || 0); break;
       case 'Mekanik CCTV': metrics.pasangCctvUnits = Number($('pasangCctvUnits')?.value || 0); metrics.servisCctvUnits = Number($('servisCctvUnits')?.value || 0); break;
@@ -350,14 +360,24 @@ $('lombokForm').addEventListener('submit', async (e) => {
     const metrics = {};
     switch (category) {
       case 'Admin GPS': 
-        if (workerName === 'Tri Maharani') metrics.insentifOverride = parseMoney($('lombok_insentifOverride')?.value);
-        else metrics.unitCount = Number($('lombok_unitCount')?.value || 0); 
+        if (workerName === 'Tri Maharani') {
+          const overrideVal = $('lombok_insentifOverride')?.value;
+          if (overrideVal && overrideVal.trim() !== '') metrics.insentifOverride = parseMoney(overrideVal);
+        } else {
+          metrics.unitCount = Number($('lombok_unitCount')?.value || 0); 
+        }
         break;
       case 'Sales HPZ': 
-        if (workerName === 'Richard Antonius') metrics.sales2MonthsAgo = parseMoney($('lombok_sales2MonthsAgo')?.value); 
+        if (workerName === 'Richard Antonius') {
+          const salesVal = $('lombok_sales2MonthsAgo')?.value;
+          if (salesVal && salesVal.trim() !== '') metrics.sales2MonthsAgo = parseMoney(salesVal);
+        }
         break;
       case 'Mekanik HPZ': 
-        if (workerName === 'Rohmad Imam Safii') metrics.instalasiHpzAmount = parseMoney($('lombok_instalasiHpzAmount')?.value); 
+        if (workerName === 'Rohmad Imam Safii') {
+          const instVal = $('lombok_instalasiHpzAmount')?.value;
+          if (instVal && instVal.trim() !== '') metrics.instalasiHpzAmount = parseMoney(instVal);
+        }
         break;
       case 'Mekanik GPS': metrics.pasangGpsUnits = Number($('lombok_pasangGpsUnits')?.value || 0); metrics.cekGpsUnits = Number($('lombok_cekGpsUnits')?.value || 0); break;
       case 'Mekanik CCTV': metrics.pasangCctvUnits = Number($('lombok_pasangCctvUnits')?.value || 0); metrics.servisCctvUnits = Number($('lombok_servisCctvUnits')?.value || 0); break;

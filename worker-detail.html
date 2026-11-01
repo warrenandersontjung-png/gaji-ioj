@@ -565,19 +565,19 @@
     function renderEditMetrics(category, workerName, m = {}) {
       let html = ''; const wrap = (label, inner) => `<div><label class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-warn">${label}</label>${inner}</div>`;
       const numberInput = (id, value) => `<input type="number" id="${id}" value="${value}" min="0" class="field font-mono" />`;
-      const moneyInput = (id, value) => `<input type="text" id="${id}" value="${formatMoney(value)}" inputmode="numeric" class="field money-input font-mono" />`;
+      const moneyInput = (id, value) => `<input type="text" id="${id}" value="${value !== undefined ? formatMoney(value) : ''}" inputmode="numeric" class="field money-input font-mono" placeholder="Blank = Default" />`;
       switch (category) {
         case 'Admin GPS': 
-          if (workerName === 'Tri Maharani') html = wrap('Insentif Khusus Tri Maharani (IDR)', moneyInput('editInsentifOverride', m.insentifOverride || 0));
+          if (workerName === 'Tri Maharani') html = wrap('Insentif Khusus Tri Maharani (IDR)', moneyInput('editInsentifOverride', m.insentifOverride));
           else html = wrap('GPS Units Sold', numberInput('editUnitCount', m.unitCount || 0)); 
           break;
         case 'Sales HPZ': 
           if (workerName === 'Richard Antonius') {
-              html = wrap('Total Penjualan 2 Bulan Lalu (IDR)', moneyInput('editSales2MonthsAgo', m.sales2MonthsAgo || 0));
+              html = wrap('Total Penjualan 2 Bulan Lalu (IDR)', moneyInput('editSales2MonthsAgo', m.sales2MonthsAgo));
           }
           break;
         case 'Mekanik HPZ': 
-          if (workerName === 'Rohmad Imam Safii') html = wrap('Monthly Installation Sales (IDR)', moneyInput('editInstalasiHpzAmount', m.instalasiHpzAmount || 0)); 
+          if (workerName === 'Rohmad Imam Safii') html = wrap('Monthly Installation Sales (IDR)', moneyInput('editInstalasiHpzAmount', m.instalasiHpzAmount)); 
           break;
         case 'Mekanik GPS': case 'Helper': html = `<div class="grid grid-cols-2 gap-4">${wrap('Pasang GPS', numberInput('editPasangGpsUnits', m.pasangGpsUnits || 0))}${wrap('Cek GPS', numberInput('editCekGpsUnits', m.cekGpsUnits || 0))}</div>`; break;
         case 'Mekanik CCTV': html = `<div class="grid grid-cols-2 gap-4">${wrap('Pasang CCTV', numberInput('editPasangCctvUnits', m.pasangCctvUnits || 0))}${wrap('Servis CCTV', numberInput('editServisCctvUnits', m.servisCctvUnits || 0))}</div>`; break;
@@ -636,19 +636,40 @@
       
       switch (newWorkerCategory) {
         case 'Admin GPS': 
-          if (newWorkerName === 'Tri Maharani') newMetrics.insentifOverride = parseMoney($('editInsentifOverride')?.value);
-          else newMetrics.unitCount = Number($('editUnitCount')?.value || 0); 
+          if (newWorkerName === 'Tri Maharani') {
+            const overrideVal = $('editInsentifOverride')?.value;
+            if (overrideVal && overrideVal.trim() !== '') newMetrics.insentifOverride = parseMoney(overrideVal);
+            else delete newMetrics.insentifOverride;
+            delete newMetrics.unitCount;
+          } else {
+            newMetrics.unitCount = Number($('editUnitCount')?.value || 0); 
+            delete newMetrics.insentifOverride;
+          }
           break;
         case 'Sales HPZ': 
           if (newWorkerName === 'Richard Antonius') {
-              newMetrics.sales2MonthsAgo = parseMoney($('editSales2MonthsAgo')?.value);
-          }
+              const rVal = $('editSales2MonthsAgo')?.value;
+              if (rVal && rVal.trim() !== '') newMetrics.sales2MonthsAgo = parseMoney(rVal);
+              else delete newMetrics.sales2MonthsAgo;
+          } else delete newMetrics.sales2MonthsAgo;
           break;
         case 'Mekanik HPZ': 
-          if (newWorkerName === 'Rohmad Imam Safii') newMetrics.instalasiHpzAmount = parseMoney($('editInstalasiHpzAmount')?.value); 
+          if (newWorkerName === 'Rohmad Imam Safii') {
+              const iVal = $('editInstalasiHpzAmount')?.value;
+              if (iVal && iVal.trim() !== '') newMetrics.instalasiHpzAmount = parseMoney(iVal);
+              else delete newMetrics.instalasiHpzAmount;
+          } else delete newMetrics.instalasiHpzAmount;
           break;
-        case 'Mekanik GPS': case 'Helper': newMetrics.pasangGpsUnits = Number($('editPasangGpsUnits')?.value || 0); newMetrics.cekGpsUnits = Number($('editCekGpsUnits')?.value || 0); if (newWorkerCategory === 'Helper') newMetrics.cleaningServiceAllowance = CLEANING_ALLOWANCE; break;
-        case 'Mekanik CCTV': newMetrics.pasangCctvUnits = Number($('editPasangCctvUnits')?.value || 0); newMetrics.servisCctvUnits = Number($('editServisCctvUnits')?.value || 0); break;
+        case 'Mekanik GPS': case 'Helper': 
+          newMetrics.pasangGpsUnits = Number($('editPasangGpsUnits')?.value || 0); 
+          newMetrics.cekGpsUnits = Number($('editCekGpsUnits')?.value || 0); 
+          if (newWorkerCategory === 'Helper') newMetrics.cleaningServiceAllowance = CLEANING_ALLOWANCE;
+          else delete newMetrics.cleaningServiceAllowance;
+          break;
+        case 'Mekanik CCTV': 
+          newMetrics.pasangCctvUnits = Number($('editPasangCctvUnits')?.value || 0); 
+          newMetrics.servisCctvUnits = Number($('editServisCctvUnits')?.value || 0); 
+          break;
       }
 
       const oldName = data.workerName, oldCat = data.workerType, oldMonth = data.recordMonth;
