@@ -48,13 +48,16 @@
       .payslip-card { background: #fff !important; border: 1px solid #cbd5e1 !important; box-shadow: none !important; width: 100% !important; max-width: 100% !important; padding: 24px !important; margin: 0 !important; color: #0f172a !important; }
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
-    #pdfStage { display: none; position: fixed; top: 0; left: 0; width: 100%; min-height: 100vh; z-index: 99990; background: #ffffff !important; overflow: visible; margin: 0; padding: 0; }
-    #pdfStage.is-open { display: block; }
+    
+    #pdfStage { display: none; position: fixed; top: 0; left: -9999px; width: 794px; z-index: 99990; background: #ffffff !important; overflow: visible; margin: 0; padding: 0; }
+    #pdfStage.is-open { display: block; left: 0; }
+    
     #pdfStatus { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 99995; display: none; align-items: center; gap: 10px; padding: 10px 18px; border-radius: 999px; background: #0f172a; color: #f1f5f9; font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; box-shadow: 0 12px 30px -10px rgba(0, 0, 0, .6); pointer-events: none; }
     #pdfStatus.is-open { display: inline-flex; }
     #pdfStatus .dot { width: 10px; height: 10px; border: 2px solid #64748b; border-top-color: #818cf8; border-radius: 50%; animation: spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    #pdfTemplate { width: 100%; max-width: 794px; margin: 0; padding: 48px 46px 44px; box-sizing: border-box; background: #ffffff !important; color: #111827; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11px; line-height: 1.45; }
+    
+    #pdfTemplate { width: 794px; min-width: 794px; margin: 0; padding: 48px 46px 44px; box-sizing: border-box; background: #ffffff !important; color: #111827; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11px; line-height: 1.45; }
     #pdfTemplate * { box-sizing: border-box; }
     #pdfTemplate table.meta { width: 100%; border-collapse: collapse; margin-bottom: 26px; padding-bottom: 18px; border-bottom: 1px solid #d1d5db; }
     #pdfTemplate table.meta td { padding: 5px 0; vertical-align: top; font-size: 10.5px; width: 25%; }
@@ -76,8 +79,7 @@
     #pdfTemplate .net-box .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; }
     #pdfTemplate .net-box .sublabel { margin-top: 2px; font-size: 9px; letter-spacing: .5px; opacity: .85; }
     #pdfTemplate .net-box .amount { font-size: 20px; font-weight: 800; letter-spacing: .5px; }
-    #pdfTemplate .footer-note { margin-top: 34px; padding-top: 10px; border-top: 1px solid #d1d5db; font-size: 9px; line-height: 1.55; color: #6b7280; text-align: justify; page-break-inside: avoid; }
-    #pdfTemplate .footer-meta { display: flex; justify-content: space-between; margin-top: 6px; font-family: 'Courier New', monospace; font-size: 8.5px; color: #9ca3af; }
+    #pdfTemplate .footer-meta { display: flex; justify-content: space-between; margin-top: 24px; font-family: 'Courier New', monospace; font-size: 8.5px; color: #9ca3af; border-top: 1px solid #d1d5db; padding-top: 10px; }
   </style>
 
   <script>
@@ -153,7 +155,6 @@
       <div class="section-title spaced">Deductions / Potongan</div>
       <table class="breakdown"><thead><tr><th>Component</th><th class="right">Amount (IDR)</th></tr></thead><tbody id="pdfDeductionsBody"></tbody></table>
       <div class="net-box"><div><div class="label">Take Home Pay</div><div class="sublabel">Total Gaji Bersih Diterima</div></div><div class="amount" id="pdfNetPay">Rp 0</div></div>
-      <div class="footer-note">This payslip is computer-generated and intended solely for the named employee. It contains confidential information and must not be shared with third parties. Any discrepancy must be reported to the Finance Department within 7 (seven) working days of the issue date.</div>
       <div class="footer-meta"><span>Ref: <span id="pdfFooterRef">—</span></span><span>Generated: <span id="pdfFooterDate">—</span></span></div>
     </div>
   </div>
@@ -344,28 +345,22 @@
           break;
         case 'Mekanik GPS': 
           const gpsP = (m.pasangGpsUnits || 0) * RATES.gpsInstall; const gpsC = (m.cekGpsUnits || 0) * RATES.gpsCheck;
-          variableAmt = gpsP + gpsC; 
           $('metricsText').textContent = `Pasang GPS: ${m.pasangGpsUnits || 0} · Cek GPS: ${m.cekGpsUnits || 0}`; 
-          $('variableBonusLabel').className = 'font-bold text-success'; $('variableBonusLabel').textContent = 'Total Bonus Mekanik';
-          varRow.className = 'flex items-center justify-between py-2.5 bg-success/5 px-2 rounded';
+          varRow.classList.add('hidden'); varRow.classList.remove('flex');
           bPasangRow.classList.replace('hidden', 'flex'); $('bonusPasangLabel').textContent = `Bonus Pasang GPS (${m.pasangGpsUnits || 0} units)`; $('bonusPasangDisplay').textContent = `+${rupiah(gpsP)}`;
           bServisRow.classList.replace('hidden', 'flex'); $('bonusServisLabel').textContent = `Bonus Cek GPS (${m.cekGpsUnits || 0} units)`; $('bonusServisDisplay').textContent = `+${rupiah(gpsC)}`;
           break;
         case 'Mekanik CCTV': 
           const cctvP = (m.pasangCctvUnits || 0) * RATES.cctvInstall; const cctvS = (m.servisCctvUnits || 0) * RATES.cctvService;
-          variableAmt = cctvP + cctvS; 
           $('metricsText').textContent = `Pasang CCTV: ${m.pasangCctvUnits || 0} · Servis CCTV: ${m.servisCctvUnits || 0}`; 
-          $('variableBonusLabel').className = 'font-bold text-success'; $('variableBonusLabel').textContent = 'Total Bonus Mekanik';
-          varRow.className = 'flex items-center justify-between py-2.5 bg-success/5 px-2 rounded';
+          varRow.classList.add('hidden'); varRow.classList.remove('flex');
           bPasangRow.classList.replace('hidden', 'flex'); $('bonusPasangLabel').textContent = `Bonus Pasang CCTV (${m.pasangCctvUnits || 0} units)`; $('bonusPasangDisplay').textContent = `+${rupiah(cctvP)}`;
           bServisRow.classList.replace('hidden', 'flex'); $('bonusServisLabel').textContent = `Bonus Servis CCTV (${m.servisCctvUnits || 0} units)`; $('bonusServisDisplay').textContent = `+${rupiah(cctvS)}`;
           break;
         case 'Helper': 
           const hP = (m.pasangGpsUnits || 0) * RATES.gpsInstall; const hC = (m.cekGpsUnits || 0) * RATES.gpsCheck;
-          variableAmt = hP + hC; 
           $('metricsText').textContent = `Pasang GPS: ${m.pasangGpsUnits || 0} · Cek GPS: ${m.cekGpsUnits || 0}`; 
-          $('variableBonusLabel').className = 'font-bold text-success'; $('variableBonusLabel').textContent = 'Total Bonus Mekanik';
-          varRow.className = 'flex items-center justify-between py-2.5 bg-success/5 px-2 rounded';
+          varRow.classList.add('hidden'); varRow.classList.remove('flex');
           bPasangRow.classList.replace('hidden', 'flex'); $('bonusPasangLabel').textContent = `Bonus Pasang GPS (${m.pasangGpsUnits || 0} units)`; $('bonusPasangDisplay').textContent = `+${rupiah(hP)}`;
           bServisRow.classList.replace('hidden', 'flex'); $('bonusServisLabel').textContent = `Bonus Cek GPS (${m.cekGpsUnits || 0} units)`; $('bonusServisDisplay').textContent = `+${rupiah(hC)}`;
           cleaningRow.classList.remove('hidden'); cleaningRow.classList.add('flex'); 
@@ -423,25 +418,21 @@
         case 'Mekanik GPS': 
           const mgP = (m.pasangGpsUnits || 0) * RATES.gpsInstall; const mgC = (m.cekGpsUnits || 0) * RATES.gpsCheck;
           earnings.push([`Bonus Pasang GPS (${m.pasangGpsUnits || 0} × ${rupiah(RATES.gpsInstall)})`, mgP], [`Bonus Cek GPS (${m.cekGpsUnits || 0} × ${rupiah(RATES.gpsCheck)})`, mgC]);
-          earnings.push(['<span style="font-weight:700;color:#059669;">Total Bonus Mekanik</span>', mgP + mgC]); 
           break;
         case 'Mekanik CCTV': 
           const mcP = (m.pasangCctvUnits || 0) * RATES.cctvInstall; const mcC = (m.servisCctvUnits || 0) * RATES.cctvService;
           earnings.push([`Bonus Pasang CCTV (${m.pasangCctvUnits || 0} × ${rupiah(RATES.cctvInstall)})`, mcP], [`Bonus Servis CCTV (${m.servisCctvUnits || 0} × ${rupiah(RATES.cctvService)})`, mcC]); 
-          earnings.push(['<span style="font-weight:700;color:#059669;">Total Bonus Mekanik</span>', mcP + mcC]); 
           break;
         case 'Helper': 
           const hP = (m.pasangGpsUnits || 0) * RATES.gpsInstall; const hC = (m.cekGpsUnits || 0) * RATES.gpsCheck;
           earnings.push([`Bonus Pasang GPS (${m.pasangGpsUnits || 0} × ${rupiah(RATES.gpsInstall)})`, hP], [`Bonus Cek GPS (${m.cekGpsUnits || 0} × ${rupiah(RATES.gpsCheck)})`, hC], ['Cleaning Service Allowance', Number(m.cleaningServiceAllowance ?? CLEANING_ALLOWANCE)]); 
-          earnings.push(['<span style="font-weight:700;color:#059669;">Total Bonus Mekanik</span>', hP + hC]); 
           break;
       }
       const totalEarnings = earnings.reduce((s, [, v]) => s + (Number(String(v).replace(/<[^>]*>?/gm, '')) || 0), 0);
       const eBody = $('pdfEarningsBody'); eBody.replaceChildren();
       earnings.forEach(([label, val]) => { 
           const tr = document.createElement('tr'); 
-          const displayVal = String(label).includes('Total Bonus') ? `<span style="font-weight:700;color:#059669;">${rupiah(val)}</span>` : rupiah(val);
-          tr.innerHTML = `<td>${label}</td><td class="right">${displayVal}</td>`; eBody.appendChild(tr); 
+          tr.innerHTML = `<td>${label}</td><td class="right">${rupiah(val)}</td>`; eBody.appendChild(tr); 
       });
       const eSub = document.createElement('tr'); eSub.className = 'subtotal'; eSub.innerHTML = `<td>Total Earnings</td><td class="right">${rupiah(totalEarnings)}</td>`; eBody.appendChild(eSub);
 
@@ -474,11 +465,11 @@
         const safePeriod = (data.recordMonth || 'Period').replace(/[^a-zA-Z0-9]/g, '_');
         
         await window.html2pdf().set({ 
-            margin: [0.35, 0.35, 0.35, 0.35], 
+            margin: 0, 
             filename: `Slip_Gaji_${safeName}_${safePeriod}.pdf`, 
-            image: { type: 'jpeg', quality: 0.98 }, 
-            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: 800 }, 
-            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+            image: { type: 'jpeg', quality: 1 }, 
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: 794 }, 
+            jsPDF: { unit: 'px', format: [794, 1123], orientation: 'portrait' },
             pagebreak: { mode: ['css', 'legacy'] } 
         }).from(pdfTemplate).save();
         
